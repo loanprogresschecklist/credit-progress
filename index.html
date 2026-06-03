@@ -503,40 +503,58 @@ async function doLogin() {
   }
 
   errorEl.style.display = 'none';
+  document.getElementById('passwordInput').disabled = true;
 
   try {
-    // Step 1: read stored password from app_config
     const configRows = await sbGet('app_config', { key: 'eq.shared_password', select: 'value', limit: '1' });
     const cfgData = configRows && configRows.length > 0 ? configRows[0] : null;
 
     if (!cfgData) {
-      errorEl.textContent = '数据库未初始化，请先在 Supabase 运行 SQL';
+      errorEl.innerHTML = '数据库未初始化。<br>请在 Supabase SQL Editor 中运行建表 SQL。<br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;">跳过登录，离线使用 →</a>';
       errorEl.style.display = 'block';
+      document.getElementById('passwordInput').disabled = false;
       return;
     }
 
     if (password !== cfgData.value) {
       errorEl.textContent = '密码错误';
       errorEl.style.display = 'block';
+      document.getElementById('passwordInput').disabled = false;
       return;
     }
 
-    // Step 2: load report data from app_data
     let reportText = '';
     try {
       const dataRows = await sbGet('app_data', { key: 'eq.report_data', select: 'value', limit: '1' });
       const rData = dataRows && dataRows.length > 0 ? dataRows[0] : null;
       if (rData) reportText = rData.value;
-    } catch (e) {
-      console.log('No report data yet:', e.message);
-    }
+    } catch (e) { console.log('No report data:', e.message); }
 
     loginSuccess(password, reportText);
   } catch (e) {
     console.error('Login error:', e);
-    errorEl.textContent = '连接失败: ' + e.message;
+    const msg = e.message || String(e);
+    errorEl.innerHTML = '云端连接失败: <b>' + escapeHTML(msg) + '</b><br><br>可能是公司网络阻断了 Supabase 域名。<br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;font-weight:700;">跳过登录，离线使用 →</a>';
     errorEl.style.display = 'block';
+    document.getElementById('passwordInput').disabled = false;
   }
+}
+
+function skipLogin() {
+  isLoggedIn = true;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainContent').classList.add('visible');
+  document.getElementById('saveBtn').style.display = 'none'; // No cloud save in offline mode
+
+  // Load from localStorage
+  try {
+    const saved = localStorage.getItem('credit_progress_input');
+    if (saved) {
+      document.getElementById('rawInput').value = saved;
+      reportData = parseReports(saved);
+      if (reportData && reportData.weeks.length > 0) renderAll();
+    }
+  } catch (e) {}
 }
 
 function loginSuccess(password, reportText) {

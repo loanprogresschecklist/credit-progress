@@ -642,8 +642,8 @@ var BANK_ALIASES = {
 function parseOldReports(rawText) {
   if (!rawText.trim()) return [];
   var text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  var weekHeaderRegex = /^(\d+)[、，,.\s]\s*(\d{4}\.\d{1,2}\.\d{1,2})/m;
-  var splitRegex = /\n(?=\d+[、，,.\s]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
+  var weekHeaderRegex = /^(\d+)[、，,.\s\\]\s*(\d{4}\.\d{1,2}\.\d{1,2})/m;
+  var splitRegex = /\n(?=\d+[、，,.\s\\]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
   var sections = text.split(splitRegex).filter(function(s) { return s.trim(); });
   var records = [];
 

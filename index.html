@@ -49,28 +49,6 @@ body {
   font-size: calc(1rem * var(--font-scale));
 }
 
-/* ===== Login Screen ===== */
-.login-screen {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; padding: 20px; background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%);
-}
-.login-box {
-  background: #fff; border-radius: 16px; padding: 36px 28px;
-  max-width: 380px; width: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-  text-align: center;
-}
-.login-box h1 { font-size: 1.3rem; margin-bottom: 6px; color: #1a3a5c; }
-.login-box .login-sub { font-size: 0.85rem; color: #6b7c93; margin-bottom: 24px; }
-.login-box label { display: block; text-align: left; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-.login-box input[type="password"] {
-  width: 100%; padding: 12px 14px; border: 1.5px solid #e2e6ed; border-radius: 8px;
-  font-size: 1rem; font-family: var(--font); margin-bottom: 16px;
-}
-.login-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,109,240,0.12); }
-.login-box .btn { width: 100%; padding: 12px; font-size: 1rem; }
-.login-box .login-error { color: #dc3545; font-size: 0.82rem; margin-top: 10px; display: none; }
-.login-box .login-hint { font-size: 0.75rem; color: #999; margin-top: 16px; }
-
 /* ===== Header ===== */
 .header {
   background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%);
@@ -94,8 +72,7 @@ body {
 .font-btn:hover { background: rgba(255,255,255,0.25); }
 .font-label { font-size: 0.75rem; opacity: 0.8; min-width: 36px; text-align: center; }
 
-.main-content { display: none; }
-.main-content.visible { display: block; }
+.main-content { }
 
 .container { max-width: 1400px; margin: 0 auto; padding: 12px; }
 
@@ -336,7 +313,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   .modal { width: 98%; max-height: 90vh; }
   .input-actions { gap: 6px; }
   .btn { padding: 8px 12px; font-size: 0.8rem; }
-  .login-box { padding: 28px 20px; }
   /* Larger tap targets on mobile */
   .cell-expand, .tab, .btn { min-height: 40px; display: inline-flex; align-items: center; }
   .font-btn { width: 36px; height: 36px; }
@@ -349,19 +325,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 </style>
 </head>
 <body>
-
-<!-- ===== LOGIN SCREEN ===== -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-box">
-    <h1>🔒 授信进展周报</h1>
-    <p class="login-sub">请输入共享密码查看</p>
-    <label for="passwordInput">密码</label>
-    <input type="password" id="passwordInput" placeholder="输入共享密码" autofocus>
-    <button class="btn btn-primary" onclick="doLogin()">确认</button>
-    <p class="login-error" id="loginError"></p>
-    <p class="login-hint">首次使用？联系管理员获取密码。<br>浏览器会记住登录状态，下次自动进入。</p>
-  </div>
-</div>
 
 <!-- ===== MAIN CONTENT ===== -->
 <div class="main-content" id="mainContent">
@@ -390,8 +353,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
       <div class="input-actions">
         <button class="btn btn-primary" onclick="parseAndRender()">🔍 解析并对比</button>
         <button class="btn btn-outline" onclick="loadDemo()">📋 加载示例</button>
-        <button class="btn btn-success" onclick="saveToCloud()" id="saveBtn" disabled>☁️ 保存到云端</button>
-        <span class="save-status" id="saveStatus"></span>
+        <button class="btn btn-outline" onclick="clearAll()" style="color:#dc3545;border-color:#dc3545;">🗑 清空</button>
       </div>
       <textarea id="rawInput" placeholder="在此粘贴原始周报文字，格式如：
 1、2026.4.30授信进展如下：
@@ -433,7 +395,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   <div class="view" id="view-summary"></div>
 </div>
 
-<div class="footer">授信进展周报对比工具 · 数据存储于云端 · 需密码访问</div>
+<div class="footer">授信进展周报对比工具 · 数据保存在浏览器本地</div>
 
 </div><!-- /main-content -->
 
@@ -448,217 +410,9 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ====== SUPABASE CONFIG ======
-const SUPABASE_URL = 'https://xewouklagifgvbeqizoq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhld291a2xhZ2lmd3ZiZXFpem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTM0NTcsImV4cCI6MjA5NjAyOTQ1N30.Wkf69uw5-K33Qhh_urgyZQ3SRZiRS_w8l9rfVW4--kk';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
 // ====== GLOBAL STATE ======
 let reportData = null;
-let isLoggedIn = false;
-
-// ====== AUTH ======
-async function doLogin() {
-  const password = document.getElementById('passwordInput').value.trim();
-  const errorEl = document.getElementById('loginError');
-
-  if (!password) {
-    errorEl.textContent = '请输入密码';
-    errorEl.style.display = 'block';
-    return;
-  }
-
-  try {
-    // Try to fetch data with password — if it works, password is correct
-    // We store a "password hash" record; if password matches, Supabase RLS allows read
-    const { data, error } = await sb
-      .from('app_data')
-      .select('value')
-      .eq('key', 'auth_check')
-      .single();
-
-    if (error) {
-      // Table might not exist yet — check against stored password
-      // For initial setup, try direct password check
-      const { data: pwData, error: pwError } = await sb
-        .from('app_config')
-        .select('value')
-        .eq('key', 'shared_password')
-        .single();
-
-      if (pwError) {
-        // First time setup — table doesn't exist. Let's check if this is a password we stored
-        const savedPw = localStorage.getItem('credit_progress_pw_hash');
-        if (savedPw) {
-          const hash = await hashPassword(password);
-          if (hash === savedPw) {
-            loginSuccess(password);
-            return;
-          }
-        }
-        errorEl.textContent = '系统尚未初始化，请联系管理员在 Supabase 中运行 SQL 建表。';
-        errorEl.style.display = 'block';
-        return;
-      }
-
-      if (pwData && pwData.value === password) {
-        loginSuccess(password);
-        return;
-      }
-      errorEl.textContent = '密码错误';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    // Table exists, password check passed via RLS
-    loginSuccess(password);
-  } catch (e) {
-    console.error('Login error:', e);
-    errorEl.textContent = '连接失败，请检查网络后重试';
-    errorEl.style.display = 'block';
-  }
-}
-
-async function hashPassword(pw) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pw + 'credit-progress-salt');
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function loginSuccess(password) {
-  isLoggedIn = true;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainContent').classList.add('visible');
-
-  // Save password hash for auto-login
-  hashPassword(password).then(hash => {
-    localStorage.setItem('credit_progress_pw_hash', hash);
-  });
-
-  // Load data from cloud
-  loadFromCloud();
-}
-
-async function tryAutoLogin() {
-  const savedHash = localStorage.getItem('credit_progress_pw_hash');
-  if (!savedHash) return false;
-
-  // Try to load data — if it works, we're authenticated
-  try {
-    const { data, error } = await sb
-      .from('app_data')
-      .select('value')
-      .eq('key', 'report_data')
-      .single();
-
-    if (data) {
-      isLoggedIn = true;
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainContent').classList.add('visible');
-      loadFromCloud();
-      return true;
-    }
-
-    // No data yet but table is accessible — still allow login
-    // Check if we can at least read the app_config
-    const { data: cfgData } = await sb
-      .from('app_config')
-      .select('value')
-      .eq('key', 'shared_password')
-      .single();
-
-    if (cfgData) {
-      isLoggedIn = true;
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainContent').classList.add('visible');
-      loadFromCloud();
-      return true;
-    }
-  } catch (e) {
-    console.log('Auto-login failed:', e.message);
-  }
-
-  return false;
-}
-
-// ====== CLOUD DATA ======
-async function loadFromCloud() {
-  try {
-    const { data, error } = await sb
-      .from('app_data')
-      .select('value')
-      .eq('key', 'report_data')
-      .single();
-
-    if (data && data.value) {
-      document.getElementById('rawInput').value = data.value;
-      reportData = parseReports(data.value);
-      if (reportData && reportData.weeks.length > 0) {
-        renderAll();
-      }
-      document.getElementById('saveBtn').disabled = false;
-      return;
-    }
-  } catch (e) {
-    console.log('Load from cloud failed:', e.message);
-  }
-
-  // Fallback to localStorage
-  try {
-    const saved = localStorage.getItem('credit_progress_input');
-    if (saved) {
-      document.getElementById('rawInput').value = saved;
-      reportData = parseReports(saved);
-      if (reportData && reportData.weeks.length > 0) {
-        renderAll();
-      }
-    }
-  } catch (e) { /* ignore */ }
-
-  document.getElementById('saveBtn').disabled = false;
-}
-
-async function saveToCloud() {
-  const rawText = document.getElementById('rawInput').value;
-  if (!rawText.trim()) {
-    alert('没有数据可保存');
-    return;
-  }
-
-  const saveBtn = document.getElementById('saveBtn');
-  const saveStatus = document.getElementById('saveStatus');
-
-  saveBtn.disabled = true;
-  saveStatus.textContent = '保存中...';
-  saveStatus.className = 'save-status';
-
-  try {
-    const { error } = await sb
-      .from('app_data')
-      .upsert({ key: 'report_data', value: rawText, updated_at: new Date().toISOString() }, { onConflict: 'key' });
-
-    if (error) throw error;
-
-    saveStatus.textContent = '✓ 已保存到云端';
-    saveStatus.className = 'save-status success';
-
-    // Also save locally
-    try { localStorage.setItem('credit_progress_input', rawText); } catch (e) { /* ignore */ }
-
-    setTimeout(() => { saveStatus.textContent = ''; }, 3000);
-  } catch (e) {
-    saveStatus.textContent = '✗ 保存失败: ' + e.message;
-    saveStatus.className = 'save-status error';
-    console.error('Save error:', e);
-  }
-
-  saveBtn.disabled = false;
-}
 
 // ====== FONT SIZE ======
 let fontScale = 1;
@@ -684,20 +438,21 @@ function changeFont(delta) {
 })();
 
 // ====== PARSER ======
-const BANK_NAMES = ['中信', '浦发', '建行', '兴业', '浙商', '招行', '民生', '光大', '平安', '广发', '华夏', '交行', '工行', '农行', '中行'];
+const BANK_NAMES = ['中信', '浦发', '建行', '兴业', '浙商', '招行', '民生', '光大', '平安', '广发', '华夏', '交行', '工行', '农行', '中行', '渤海', '宁波', '江苏', '广州'];
 const BANK_ALIASES = {
   '中信银行': '中信', '浦发银行': '浦发', '建设银行': '建行', '建行银行': '建行',
   '兴业银行': '兴业', '浙商银行': '浙商', '招商银行': '招行', '民生银行': '民生',
   '光大银行': '光大', '平安银行': '平安', '广发银行': '广发', '华夏银行': '华夏',
   '交通银行': '交行', '工商银行': '工行', '农业银行': '农行', '中国银行': '中行',
+  '渤海银行': '渤海', '宁波银行': '宁波', '江苏银行': '江苏', '广州银行': '广州',
 };
 
 function parseReports(rawText) {
   if (!rawText.trim()) return null;
 
   let text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const weekHeaderRegex = /^(\d+)[、，,.\s]\s*(\d{4}\.\d{1,2}\.\d{1,2})[^\n]*?(?:进展|授信|周报|汇报)/m;
-  const splitRegex = /\n(?=\d+[、，,.\s]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
+  const weekHeaderRegex = /^(\d+)[、，,.\s\\]\s*(\d{4}\.\d{1,2}\.\d{1,2})[^\n]*?(?:进展|授信|周报|汇报)/m;
+  const splitRegex = /\n(?=\d+[、，,.\s\\]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
 
   const sections = text.split(splitRegex).filter(s => s.trim());
   const weeks = [];
@@ -1198,10 +953,7 @@ function clearAll() {
 // ====== INIT ======
 function init() {
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && document.activeElement === document.getElementById('passwordInput')) {
-      doLogin();
-    }
-    if (e.ctrlKey && e.key === 'Enter' && isLoggedIn) {
+    if (e.ctrlKey && e.key === 'Enter') {
       parseAndRender();
     }
     if (e.key === 'Escape') closeModal();
@@ -1211,12 +963,17 @@ function init() {
     if (e.target === this) closeModal();
   });
 
-  // Try auto-login
-  tryAutoLogin().then(success => {
-    if (!success) {
-      document.getElementById('loginScreen').style.display = 'flex';
+  // Load saved data from localStorage
+  try {
+    const saved = localStorage.getItem('credit_progress_input');
+    if (saved) {
+      document.getElementById('rawInput').value = saved;
+      reportData = parseReports(saved);
+      if (reportData && reportData.weeks.length > 0) {
+        renderAll();
+      }
     }
-  });
+  } catch (e) { /* ignore */ }
 }
 
 init();

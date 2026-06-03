@@ -448,30 +448,39 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 </div>
 
 <script>
-// ====== SUPABASE API (pure fetch, no CDN) ======
-const SUPABASE_URL = 'https://xewouklagifgvbeqizoq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhld291a2xhZ2lmd3ZiZXFpem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTM0NTcsImV4cCI6MjA5NjAyOTQ1N30.Wkf69uw5-K33Qhh_urgyZQ3SRZiRS_w8l9rfVW4--kk';
+// ====== GITHUB API STORAGE (works in China) ======
+const DATA_URL = 'https://raw.githubusercontent.com/loanprogresschecklist/credit-progress/main/data/report.json';
+const DATA_API = 'https://api.github.com/repos/loanprogresschecklist/credit-progress/contents/data/report.json';
+const GH_TOKEN = localStorage.getItem('credit_progress_gh_token') || '';
 
-async function sbGet(table, query) {
-  const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(query)) params.set(k, v);
-  const url = `${SUPABASE_URL}/rest/v1/${table}?${params.toString()}`;
-  const res = await fetch(url, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  });
-  if (!res.ok) { const t = await res.text(); throw new Error(`GET ${table}: ${res.status} ${t}`); }
+async function loadDataFile() {
+  const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!res.ok) throw new Error('无法加载数据: HTTP ' + res.status);
   return res.json();
 }
 
-async function sbRpc(fnName, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
-    method: 'POST',
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+async function saveDataFile(newContent) {
+  const getRes = await fetch(DATA_API, {
+    headers: { Authorization: 'token ' + GH_TOKEN, Accept: 'application/vnd.github.v3+json' }
   });
-  if (!res.ok) { const t = await res.text(); throw new Error(`RPC ${fnName}: ${res.status} ${t}`); }
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  if (!getRes.ok) { const t = await getRes.text(); throw new Error('读取文件信息失败: HTTP ' + getRes.status); }
+  const fileInfo = await getRes.json();
+  const sha = fileInfo.sha;
+  const body = JSON.stringify({
+    message: 'Update report',
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(newContent, null, 2)))),
+    sha: sha
+  });
+  const putRes = await fetch(DATA_API, {
+    method: 'PUT',
+    headers: { Authorization: 'token ' + GH_TOKEN, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: body
+  });
+  if (!putRes.ok) {
+    if (putRes.status === 409) throw new Error('数据冲突，请稍后重试');
+    const t = await putRes.text(); throw new Error('保存失败: HTTP ' + putRes.status);
+  }
+  return true;
 }
 
 // ====== GLOBAL STATE ======
@@ -484,10 +493,10 @@ function togglePw() {
   const eye = document.getElementById('pwEye');
   if (inp.type === 'password') {
     inp.type = 'text';
-    eye.textContent = '🙈';
+    eye.textContent = '閉';
   } else {
     inp.type = 'password';
-    eye.textContent = '👁';
+    eye.textContent = '目';
   }
 }
 
@@ -503,40 +512,24 @@ async function doLogin() {
   }
 
   errorEl.style.display = 'none';
-  document.getElementById('passwordInput').disabled = true;
 
   try {
-    const configRows = await sbGet('app_config', { key: 'eq.shared_password', select: 'value', limit: '1' });
-    const cfgData = configRows && configRows.length > 0 ? configRows[0] : null;
+    // Load data file which contains the password hash
+    const data = await loadDataFile();
+    const storedPw = data.password || 'credit2024'; // default if not set
 
-    if (!cfgData) {
-      errorEl.innerHTML = '数据库未初始化。<br>请在 Supabase SQL Editor 中运行建表 SQL。<br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;">跳过登录，离线使用 →</a>';
-      errorEl.style.display = 'block';
-      document.getElementById('passwordInput').disabled = false;
-      return;
-    }
-
-    if (password !== cfgData.value) {
+    if (password !== storedPw) {
       errorEl.textContent = '密码错误';
       errorEl.style.display = 'block';
-      document.getElementById('passwordInput').disabled = false;
       return;
     }
 
-    let reportText = '';
-    try {
-      const dataRows = await sbGet('app_data', { key: 'eq.report_data', select: 'value', limit: '1' });
-      const rData = dataRows && dataRows.length > 0 ? dataRows[0] : null;
-      if (rData) reportText = rData.value;
-    } catch (e) { console.log('No report data:', e.message); }
-
-    loginSuccess(password, reportText);
+    loginSuccess(password, data.report || '');
   } catch (e) {
     console.error('Login error:', e);
     const msg = e.message || String(e);
-    errorEl.innerHTML = '云端连接失败: <b>' + escapeHTML(msg) + '</b><br><br>可能是公司网络阻断了 Supabase 域名。<br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;font-weight:700;">跳过登录，离线使用 →</a>';
+    errorEl.innerHTML = '云端连接失败: <b>' + msg.replace(/</g,'&lt;') + '</b><br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;font-weight:700;">跳过登录，离线使用 -></a>';
     errorEl.style.display = 'block';
-    document.getElementById('passwordInput').disabled = false;
   }
 }
 
@@ -544,9 +537,7 @@ function skipLogin() {
   isLoggedIn = true;
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainContent').classList.add('visible');
-  document.getElementById('saveBtn').style.display = 'none'; // No cloud save in offline mode
-
-  // Load from localStorage
+  document.getElementById('saveBtn').style.display = 'none';
   try {
     const saved = localStorage.getItem('credit_progress_input');
     if (saved) {
@@ -576,22 +567,13 @@ async function tryAutoLogin() {
   if (!savedPw) return false;
 
   try {
-    const configRows = await sbGet('app_config', { key: 'eq.shared_password', select: 'value', limit: '1' });
-    const cfgData = configRows && configRows.length > 0 ? configRows[0] : null;
-
-    if (!cfgData || savedPw !== cfgData.value) {
+    const data = await loadDataFile();
+    const storedPw = data.password || 'credit2024';
+    if (savedPw !== storedPw) {
       localStorage.removeItem('credit_progress_pw');
       return false;
     }
-
-    let reportText = '';
-    try {
-      const dataRows = await sbGet('app_data', { key: 'eq.report_data', select: 'value', limit: '1' });
-      const rData = dataRows && dataRows.length > 0 ? dataRows[0] : null;
-      if (rData) reportText = rData.value;
-    } catch (e) { /* no data yet */ }
-
-    loginSuccess(savedPw, reportText);
+    loginSuccess(savedPw, data.report || '');
     return true;
   } catch (e) {
     console.log('Auto-login failed:', e.message);
@@ -606,10 +588,16 @@ async function saveToCloud() {
 
   const saveBtn = document.getElementById('saveBtn');
   const saveStatus = document.getElementById('saveStatus');
-  const password = localStorage.getItem('credit_progress_pw');
 
-  if (!password) {
-    saveStatus.textContent = '✗ 未登录'; saveStatus.className = 'save-status error'; return;
+  // Check if GitHub token is configured
+  if (!localStorage.getItem('credit_progress_gh_token')) {
+    const token = prompt('首次保存需要配置 GitHub Token。
+
+请输入你的 GitHub Personal Access Token（需要 repo 权限）：');
+    if (!token) return;
+    localStorage.setItem('credit_progress_gh_token', token);
+    location.reload(); // Reload to pick up the new token
+    return;
   }
 
   saveBtn.disabled = true;
@@ -617,18 +605,17 @@ async function saveToCloud() {
   saveStatus.className = 'save-status';
 
   try {
-    const result = await sbRpc('save_report', { pw: password, data_value: rawText });
-    if (result === true || result === 'true') {
-      saveStatus.textContent = '✓ 已保存到云端';
-      saveStatus.className = 'save-status success';
-      try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
-      setTimeout(() => { saveStatus.textContent = ''; }, 3000);
-    } else {
-      saveStatus.textContent = '✗ 密码验证失败';
-      saveStatus.className = 'save-status error';
-    }
+    const data = await loadDataFile();
+    data.report = rawText;
+    if (!data.password) data.password = 'credit2024';
+    await saveDataFile(data);
+
+    saveStatus.textContent = '已保存到云端';
+    saveStatus.className = 'save-status success';
+    try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
+    setTimeout(() => { saveStatus.textContent = ''; }, 3000);
   } catch (e) {
-    saveStatus.textContent = '✗ 保存失败: ' + e.message;
+    saveStatus.textContent = '保存失败: ' + (e.message || String(e)).replace(/</g,'&lt;');
     saveStatus.className = 'save-status error';
     console.error('Save error:', e);
   }

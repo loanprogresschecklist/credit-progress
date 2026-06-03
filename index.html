@@ -448,10 +448,10 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 </div>
 
 <script>
-// ====== GITHUB API STORAGE (works in China) ======
+// ====== GITHUB API STORAGE ======
 const DATA_URL = 'https://raw.githubusercontent.com/loanprogresschecklist/credit-progress/main/data/report.json';
 const DATA_API = 'https://api.github.com/repos/loanprogresschecklist/credit-progress/contents/data/report.json';
-const GH_TOKEN = localStorage.getItem('credit_progress_gh_token') || '';
+let ghToken = localStorage.getItem('credit_progress_gh_token') || '';
 
 async function loadDataFile() {
   const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
@@ -460,25 +460,25 @@ async function loadDataFile() {
 }
 
 async function saveDataFile(newContent) {
+  if (!ghToken) throw new Error('未配置GitHub Token');
   const getRes = await fetch(DATA_API, {
-    headers: { Authorization: 'token ' + GH_TOKEN, Accept: 'application/vnd.github.v3+json' }
+    headers: { Authorization: 'token ' + ghToken, Accept: 'application/vnd.github.v3+json' }
   });
-  if (!getRes.ok) { const t = await getRes.text(); throw new Error('读取文件信息失败: HTTP ' + getRes.status); }
+  if (!getRes.ok) throw new Error('读取文件信息失败: HTTP ' + getRes.status);
   const fileInfo = await getRes.json();
   const sha = fileInfo.sha;
-  const body = JSON.stringify({
-    message: 'Update report',
-    content: btoa(unescape(encodeURIComponent(JSON.stringify(newContent, null, 2)))),
-    sha: sha
-  });
   const putRes = await fetch(DATA_API, {
     method: 'PUT',
-    headers: { Authorization: 'token ' + GH_TOKEN, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-    body: body
+    headers: { Authorization: 'token ' + ghToken, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: 'Update report',
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(newContent, null, 2)))),
+      sha: sha
+    })
   });
   if (!putRes.ok) {
     if (putRes.status === 409) throw new Error('数据冲突，请稍后重试');
-    const t = await putRes.text(); throw new Error('保存失败: HTTP ' + putRes.status);
+    throw new Error('保存失败: HTTP ' + putRes.status);
   }
   return true;
 }
@@ -489,46 +489,32 @@ let isLoggedIn = false;
 
 // ====== PASSWORD TOGGLE ======
 function togglePw() {
-  const inp = document.getElementById('passwordInput');
-  const eye = document.getElementById('pwEye');
+  var inp = document.getElementById('passwordInput');
+  var eye = document.getElementById('pwEye');
   if (inp.type === 'password') {
     inp.type = 'text';
-    eye.textContent = '閉';
+    eye.textContent = '隐';
   } else {
     inp.type = 'password';
-    eye.textContent = '目';
+    eye.textContent = '显';
   }
 }
 
 // ====== AUTH ======
 async function doLogin() {
-  const password = document.getElementById('passwordInput').value.trim();
-  const errorEl = document.getElementById('loginError');
-
-  if (!password) {
-    errorEl.textContent = '请输入密码';
-    errorEl.style.display = 'block';
-    return;
-  }
-
+  var password = document.getElementById('passwordInput').value.trim();
+  var errorEl = document.getElementById('loginError');
+  if (!password) { errorEl.textContent = '请输入密码'; errorEl.style.display = 'block'; return; }
   errorEl.style.display = 'none';
 
   try {
-    // Load data file which contains the password hash
-    const data = await loadDataFile();
-    const storedPw = data.password || 'credit2024'; // default if not set
-
-    if (password !== storedPw) {
-      errorEl.textContent = '密码错误';
-      errorEl.style.display = 'block';
-      return;
-    }
-
+    var data = await loadDataFile();
+    var storedPw = data.password || 'credit2024';
+    if (password !== storedPw) { errorEl.textContent = '密码错误'; errorEl.style.display = 'block'; return; }
     loginSuccess(password, data.report || '');
   } catch (e) {
     console.error('Login error:', e);
-    const msg = e.message || String(e);
-    errorEl.innerHTML = '云端连接失败: <b>' + msg.replace(/</g,'&lt;') + '</b><br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;font-weight:700;">跳过登录，离线使用 -></a>';
+    errorEl.innerHTML = '云端连接失败: <b>' + (e.message||'').replace(/</g,'&lt;') + '</b><br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;font-weight:700;">跳过登录，离线使用</a>';
     errorEl.style.display = 'block';
   }
 }
@@ -539,12 +525,8 @@ function skipLogin() {
   document.getElementById('mainContent').classList.add('visible');
   document.getElementById('saveBtn').style.display = 'none';
   try {
-    const saved = localStorage.getItem('credit_progress_input');
-    if (saved) {
-      document.getElementById('rawInput').value = saved;
-      reportData = parseReports(saved);
-      if (reportData && reportData.weeks.length > 0) renderAll();
-    }
+    var saved = localStorage.getItem('credit_progress_input');
+    if (saved) { document.getElementById('rawInput').value = saved; reportData = parseReports(saved); if (reportData && reportData.weeks.length > 0) renderAll(); }
   } catch (e) {}
 }
 
@@ -553,51 +535,34 @@ function loginSuccess(password, reportText) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainContent').classList.add('visible');
   localStorage.setItem('credit_progress_pw', password);
-
-  if (reportText) {
-    document.getElementById('rawInput').value = reportText;
-    reportData = parseReports(reportText);
-    if (reportData && reportData.weeks.length > 0) renderAll();
-  }
+  if (reportText) { document.getElementById('rawInput').value = reportText; reportData = parseReports(reportText); if (reportData && reportData.weeks.length > 0) renderAll(); }
   document.getElementById('saveBtn').disabled = false;
 }
 
 async function tryAutoLogin() {
-  const savedPw = localStorage.getItem('credit_progress_pw');
+  var savedPw = localStorage.getItem('credit_progress_pw');
   if (!savedPw) return false;
-
   try {
-    const data = await loadDataFile();
-    const storedPw = data.password || 'credit2024';
-    if (savedPw !== storedPw) {
-      localStorage.removeItem('credit_progress_pw');
-      return false;
-    }
+    var data = await loadDataFile();
+    if (savedPw !== (data.password || 'credit2024')) { localStorage.removeItem('credit_progress_pw'); return false; }
     loginSuccess(savedPw, data.report || '');
     return true;
-  } catch (e) {
-    console.log('Auto-login failed:', e.message);
-  }
+  } catch (e) { console.log('Auto-login failed:', e.message); }
   return false;
 }
 
 // ====== SAVE TO CLOUD ======
 async function saveToCloud() {
-  const rawText = document.getElementById('rawInput').value;
+  var rawText = document.getElementById('rawInput').value;
   if (!rawText.trim()) { alert('没有数据可保存'); return; }
+  var saveBtn = document.getElementById('saveBtn');
+  var saveStatus = document.getElementById('saveStatus');
 
-  const saveBtn = document.getElementById('saveBtn');
-  const saveStatus = document.getElementById('saveStatus');
-
-  // Check if GitHub token is configured
   if (!localStorage.getItem('credit_progress_gh_token')) {
-    const token = prompt('首次保存需要配置 GitHub Token。
-
-请输入你的 GitHub Personal Access Token（需要 repo 权限）：');
+    var token = prompt('首次保存需要 GitHub Token。\n请输入 GitHub Personal Access Token（需 repo 权限）：');
     if (!token) return;
     localStorage.setItem('credit_progress_gh_token', token);
-    location.reload(); // Reload to pick up the new token
-    return;
+    ghToken = token;
   }
 
   saveBtn.disabled = true;
@@ -605,24 +570,22 @@ async function saveToCloud() {
   saveStatus.className = 'save-status';
 
   try {
-    const data = await loadDataFile();
+    var data = await loadDataFile();
     data.report = rawText;
     if (!data.password) data.password = 'credit2024';
     await saveDataFile(data);
-
     saveStatus.textContent = '已保存到云端';
     saveStatus.className = 'save-status success';
     try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
-    setTimeout(() => { saveStatus.textContent = ''; }, 3000);
+    setTimeout(function() { saveStatus.textContent = ''; }, 3000);
   } catch (e) {
-    saveStatus.textContent = '保存失败: ' + (e.message || String(e)).replace(/</g,'&lt;');
+    saveStatus.textContent = '保存失败: ' + (e.message||'').replace(/</g,'&lt;');
     saveStatus.className = 'save-status error';
-    console.error('Save error:', e);
   }
-
   saveBtn.disabled = false;
 }
 
+// ====== FONT SIZE ======// ====== FONT SIZE ======
 // ====== FONT SIZE ======
 let fontScale = 1;
 const fontLabels = ['小号', '标准', '大号', '特大', '超大'];

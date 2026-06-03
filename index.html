@@ -3,65 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
-<title>授信进展周报对比工具</title>
+<title>授信进展周报</title>
 <style>
-/* ===== Reset & Variables ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --font-scale: 1;
-  --bg: #f5f6f8;
-  --card-bg: #fff;
-  --text: #2c3e50;
-  --text-secondary: #6b7c93;
-  --border: #e2e6ed;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08);
-  --radius: 8px;
-
-  --progress: #d4edda;
-  --progress-text: #155724;
-  --minor: #fff3cd;
-  --minor-text: #856404;
-  --stalled: #fce4e4;
-  --stalled-text: #a71d2a;
-  --new-item: #d1ecf1;
-  --new-item-text: #0c5460;
-  --removed: #e8e8e8;
-  --removed-text: #999;
-
-  --diff-add-bg: #d4edda;
-  --diff-add-text: #155724;
-  --diff-del-bg: #fce4e4;
-  --diff-del-text: #a71d2a;
-
-  --accent: #3b6df0;
-  --accent-hover: #2b54d4;
+  --bg: #f5f6f8; --card-bg: #fff; --text: #2c3e50; --text-secondary: #6b7c93;
+  --border: #e2e6ed; --shadow: 0 1px 3px rgba(0,0,0,0.08); --radius: 8px;
+  --accent: #3b6df0; --accent-hover: #2b54d4;
   --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif;
-  --font-mono: "SF Mono", "Menlo", "Consolas", monospace;
+
+  --s-progress-bg: #dbeafe; --s-progress-text: #1e40af; --s-progress-border: #3b6df0;
+  --s-stopped-bg: #fee2e2; --s-stopped-text: #991b1b; --s-stopped-border: #dc3545;
+  --s-completed-bg: #dcfce7; --s-completed-text: #166534; --s-completed-border: #28a745;
+  --s-empty-bg: #fef3c7; --s-empty-text: #92400e;
 }
 
 body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-  min-height: 100vh;
-  font-size: calc(1rem * var(--font-scale));
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  line-height: 1.6; min-height: 100vh; font-size: calc(1rem * var(--font-scale));
 }
 
-/* ===== Login Screen ===== */
 .login-screen {
   display: flex; align-items: center; justify-content: center;
   min-height: 100vh; padding: 20px; background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%);
 }
 .login-box {
   background: #fff; border-radius: 16px; padding: 36px 28px;
-  max-width: 380px; width: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-  text-align: center;
+  max-width: 380px; width: 100%; box-shadow: 0 8px 30px rgba(0,0,0,0.25); text-align: center;
 }
 .login-box h1 { font-size: 1.3rem; margin-bottom: 6px; color: #1a3a5c; }
 .login-box .login-sub { font-size: 0.85rem; color: #6b7c93; margin-bottom: 24px; }
-.login-box label { display: block; text-align: left; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
 .pw-wrap { position: relative; margin-bottom: 16px; }
 .pw-wrap input {
   width: 100%; padding: 12px 44px 12px 14px; border: 1.5px solid #e2e6ed; border-radius: 8px;
@@ -70,60 +43,41 @@ body {
 .pw-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,109,240,0.12); }
 .pw-eye {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; font-size: 1.1rem;
-  color: #999; padding: 4px; line-height: 1;
+  background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #999; padding: 4px;
 }
-.pw-eye:hover { color: #555; }
 .login-box .btn { width: 100%; padding: 12px; font-size: 1rem; }
 .login-box .login-error { color: #dc3545; font-size: 0.82rem; margin-top: 10px; display: none; }
 .login-box .login-hint { font-size: 0.75rem; color: #999; margin-top: 16px; }
 
-.main-content { display: none; }
-.main-content.visible { display: block; }
-
-/* ===== Header ===== */
 .header {
   background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%);
-  color: #fff;
-  padding: 12px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 8px;
+  color: #fff; padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
 }
-.header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: 0.02em; }
+.header h1 { font-size: 1.15rem; font-weight: 600; }
 .header .subtitle { font-size: 0.78rem; opacity: 0.75; }
 .header-right { display: flex; align-items: center; gap: 10px; }
-
-/* Font size controls */
 .font-controls { display: flex; align-items: center; gap: 4px; }
 .font-btn {
   width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.4);
   background: rgba(255,255,255,0.1); color: #fff; cursor: pointer;
   font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s;
 }
 .font-btn:hover { background: rgba(255,255,255,0.25); }
 .font-label { font-size: 0.75rem; opacity: 0.8; min-width: 36px; text-align: center; }
-
-.container { max-width: 1400px; margin: 0 auto; padding: 12px; }
-
-/* ===== Input Area ===== */
-.input-section { margin-bottom: 12px; }
-.input-toggle {
-  display: flex; align-items: center; gap: 8px; cursor: pointer;
-  padding: 10px 14px; background: var(--card-bg); border-radius: var(--radius);
-  box-shadow: var(--shadow); font-weight: 600; font-size: 0.88rem;
-  user-select: none;
+.role-badge {
+  padding: 3px 10px; border-radius: 10px; font-size: 0.72rem; font-weight: 700;
 }
-.input-toggle .arrow { transition: transform 0.2s; font-size: 0.7rem; }
-.input-toggle.open .arrow { transform: rotate(90deg); }
-.input-body { display: none; margin-top: 8px; }
-.input-body.open { display: block; }
-.input-actions { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+.role-badge.editor { background: #dbeafe; color: #1e40af; }
+.role-badge.viewer { background: #dcfce7; color: #166534; }
+
+.main-content { display: none; }
+.main-content.visible { display: block; }
+.container { max-width: 1400px; margin: 0 auto; padding: 12px; }
 
 .btn {
   padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
-  font-size: 0.84rem; font-weight: 600; font-family: var(--font);
-  transition: all 0.15s; white-space: nowrap;
+  font-size: 0.84rem; font-weight: 600; font-family: var(--font); transition: all 0.15s;
 }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { background: var(--accent-hover); }
@@ -131,22 +85,77 @@ body {
 .btn-outline:hover { background: #f0f4ff; }
 .btn-success { background: #28a745; color: #fff; }
 .btn-success:hover { background: #218838; }
+.btn-danger { background: #dc3545; color: #fff; }
 .btn-sm { padding: 5px 12px; font-size: 0.76rem; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.save-status { font-size: 0.78rem; color: var(--text-secondary); margin-left: 4px; }
+.status-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 10px;
+  font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+}
+.status-badge.progress { background: var(--s-progress-bg); color: var(--s-progress-text); }
+.status-badge.stopped { background: var(--s-stopped-bg); color: var(--s-stopped-text); }
+.status-badge.completed { background: var(--s-completed-bg); color: var(--s-completed-text); }
+.status-badge.empty { background: var(--s-empty-bg); color: var(--s-empty-text); }
+
+.editor-section { margin-bottom: 12px; }
+.section-toggle {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 10px 14px; background: var(--card-bg); border-radius: var(--radius);
+  box-shadow: var(--shadow); font-weight: 600; font-size: 0.88rem; user-select: none;
+}
+.section-toggle .arrow { transition: transform 0.2s; font-size: 0.7rem; }
+.section-toggle.open .arrow { transform: rotate(90deg); }
+.section-body { display: none; margin-top: 8px; }
+.section-body.open { display: block; }
+
+.week-selector {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;
+}
+.week-selector select, .week-selector input {
+  padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 6px;
+  font-size: 0.85rem; font-family: var(--font); background: var(--card-bg);
+}
+.week-selector select:focus, .week-selector input:focus { outline: none; border-color: var(--accent); }
+
+.form-table {
+  width: 100%; border-collapse: collapse; background: var(--card-bg);
+  border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  margin-bottom: 10px;
+}
+.form-table th, .form-table td {
+  padding: 8px 10px; border: 1px solid var(--border); font-size: 0.8rem;
+}
+.form-table th { background: #f8f9fb; font-weight: 700; text-align: center; white-space: nowrap; }
+.form-table td.bank-cell { font-weight: 700; text-align: center; white-space: nowrap; min-width: 60px; }
+.form-table input[type="text"], .form-table textarea, .form-table select {
+  width: 100%; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 4px;
+  font-size: 0.8rem; font-family: var(--font); background: var(--card-bg);
+}
+.form-table textarea { resize: vertical; min-height: 48px; }
+.form-table input:focus, .form-table textarea:focus, .form-table select:focus {
+  outline: none; border-color: var(--accent);
+}
+
+.record-list { margin-top: 8px; }
+.record-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--card-bg); border-radius: 6px; box-shadow: var(--shadow);
+  margin-bottom: 6px; flex-wrap: wrap; font-size: 0.82rem;
+}
+.record-item .bank-label { font-weight: 700; min-width: 50px; }
+.record-item .detail-text { flex: 1; min-width: 200px; color: var(--text-secondary); }
+.record-item .actions { display: flex; gap: 4px; }
+.record-item .actions button {
+  padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px;
+  background: #fff; cursor: pointer; font-size: 0.75rem;
+}
+.record-item .actions button:hover { background: #f0f0f0; }
+
+.save-status { font-size: 0.78rem; color: var(--text-secondary); margin-left: 8px; }
 .save-status.success { color: #28a745; }
 .save-status.error { color: #dc3545; }
 
-textarea {
-  width: 100%; min-height: 180px; padding: 12px;
-  border: 1.5px solid var(--border); border-radius: var(--radius);
-  font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.7;
-  resize: vertical; background: var(--card-bg);
-}
-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,109,240,0.12); }
-
-/* ===== Tabs ===== */
 .tabs {
   display: flex; gap: 2px; margin-bottom: 12px;
   background: var(--card-bg); border-radius: var(--radius);
@@ -160,7 +169,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .tab:hover { color: var(--text); background: #f0f2f5; }
 .tab.active { background: var(--accent); color: #fff; }
 
-/* ===== Legend ===== */
 .legend {
   display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
   font-size: 0.76rem; align-items: center;
@@ -168,7 +176,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .legend-item { display: flex; align-items: center; gap: 4px; }
 .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
-/* ===== Views ===== */
 .view { display: none; }
 .view.active { display: block; }
 
@@ -181,26 +188,13 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   padding: 8px 12px; border: 1px solid var(--border); vertical-align: top;
   font-size: 0.8rem; line-height: 1.55;
 }
-.table-wrap th {
-  background: #f8f9fb; font-weight: 700; text-align: center;
-  position: sticky; top: 0; z-index: 1;
-}
+.table-wrap th { background: #f8f9fb; font-weight: 700; text-align: center; position: sticky; top: 0; z-index: 1; }
 .table-wrap th.bank-col { text-align: left; width: 70px; }
 .table-wrap th.week-col { min-width: 220px; }
 .table-wrap td.bank-name {
   font-weight: 700; text-align: center; background: #f8f9fb;
   position: sticky; left: 0; z-index: 1; font-size: 0.83rem;
 }
-.cell-badge {
-  display: inline-block; padding: 2px 7px; border-radius: 10px;
-  font-size: 0.68rem; font-weight: 700; margin-bottom: 4px;
-}
-.cell-badge.progress { background: var(--progress); color: var(--progress-text); }
-.cell-badge.minor { background: var(--minor); color: var(--minor-text); }
-.cell-badge.stalled { background: var(--stalled); color: var(--stalled-text); }
-.cell-badge.new { background: var(--new-item); color: var(--new-item-text); }
-.cell-badge.removed { background: var(--removed); color: var(--removed-text); }
-.cell-badge.dup { background: #fce4e4; color: #a71d2a; }
 
 .cell-text { font-size: 0.79rem; color: var(--text); }
 .cell-text.collapsed { max-height: 4.2em; overflow: hidden; position: relative; }
@@ -214,17 +208,15 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 }
 .cell-expand:hover { text-decoration: underline; }
 
-.diff-add { background: var(--diff-add-bg); color: var(--diff-add-text); padding: 1px 2px; border-radius: 2px; }
-.diff-del { background: var(--diff-del-bg); color: var(--diff-del-text); text-decoration: line-through; padding: 1px 2px; border-radius: 2px; }
+.diff-add { background: #d4edda; color: #155724; padding: 1px 2px; border-radius: 2px; }
+.diff-del { background: #fce4e4; color: #a71d2a; text-decoration: line-through; padding: 1px 2px; border-radius: 2px; }
 
-/* ===== Card View ===== */
 .card-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 12px;
 }
 .card {
-  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
-  overflow: hidden;
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
 }
 .card-header {
   padding: 10px 14px; background: #f8f9fb; font-weight: 700; font-size: 0.88rem;
@@ -233,30 +225,53 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 }
 .card-body { padding: 0; }
 .card-week {
-  padding: 10px 14px; border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); transition: background 0.15s;
 }
 .card-week:last-child { border-bottom: none; }
-.card-week.stalled { background: #fefafa; }
-.card-week.progress { background: #f8fdf8; }
-.card-week.minor { background: #fffefa; }
-.card-week.new { background: #f6fbfc; }
 .card-week-date {
   font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 3px;
   display: flex; align-items: center; gap: 6px;
 }
-.card-week-date .badge { font-size: 0.64rem; padding: 1px 6px; border-radius: 8px; }
 .card-week-text { font-size: 0.79rem; line-height: 1.55; }
 
-/* ===== Diff Detail View ===== */
+.viewer-cards { display: flex; flex-direction: column; gap: 14px; }
+.vcard {
+  background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden; border-left: 5px solid #ccc;
+}
+.vcard.s-progress { border-left-color: var(--s-progress-border); }
+.vcard.s-stopped { border-left-color: var(--s-stopped-border); }
+.vcard.s-completed { border-left-color: var(--s-completed-border); }
+.vcard.s-empty { border-left-color: #f59e0b; }
+
+.vcard-header {
+  padding: 14px 16px 8px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.vcard-bank {
+  font-size: 1.25rem; font-weight: 800; color: #1a3a5c;
+}
+.vcard-body { padding: 0 16px 12px; }
+.vcard-amount { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 4px; }
+.vcard-date { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; }
+.vcard-detail { font-size: 0.85rem; line-height: 1.65; color: var(--text); }
+
+.vcard-history-toggle {
+  padding: 10px 16px; background: #f8f9fb; cursor: pointer;
+  font-size: 0.8rem; color: var(--accent); font-weight: 600; border-top: 1px solid var(--border);
+}
+.vcard-history { display: none; }
+.vcard-history.open { display: block; }
+.vcard-history .vcard-week {
+  padding: 8px 16px; border-top: 1px solid #f0f0f0; font-size: 0.78rem;
+}
+.vcard-history .vcard-week-date { font-weight: 700; color: var(--text-secondary); margin-bottom: 2px; }
+
 .diff-list { display: flex; flex-direction: column; gap: 8px; }
 .diff-item {
   background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
   padding: 12px 14px; border-left: 4px solid transparent;
 }
-.diff-item.progress { border-left-color: #28a745; }
-.diff-item.minor { border-left-color: #ffc107; }
-.diff-item.stalled { border-left-color: #dc3545; }
 .diff-item-header {
   display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;
 }
@@ -264,14 +279,12 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .diff-item-weeks { font-size: 0.78rem; color: var(--text-secondary); }
 .diff-item-body { font-size: 0.8rem; line-height: 1.6; }
 
-/* ===== Summary View ===== */
 .summary-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px; margin-bottom: 16px;
 }
 .summary-card {
-  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 14px;
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px;
 }
 .summary-card h3 { font-size: 0.88rem; margin-bottom: 8px; }
 .summary-stat {
@@ -280,14 +293,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 }
 .summary-stat:last-child { border-bottom: none; }
 .summary-stat .val { font-weight: 700; }
-.progress-bar {
-  height: 7px; border-radius: 3px; background: #e9ecef;
-  margin: 6px 0; overflow: hidden;
-}
-.progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-.progress-bar-fill.good { background: #28a745; }
-.progress-bar-fill.warn { background: #ffc107; }
-.progress-bar-fill.bad { background: #dc3545; }
 
 .warnings {
   background: #fff3cd; border: 1px solid #e6c968; border-radius: var(--radius);
@@ -295,7 +300,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 }
 .warnings strong { color: #856404; }
 
-/* ===== Modal ===== */
 .modal-overlay {
   display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
   z-index: 1000; align-items: center; justify-content: center;
@@ -319,29 +323,37 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .modal-close:hover { background: #f0f0f0; }
 .modal-body { padding: 16px; }
 .modal-body h4 { font-size: 0.83rem; color: var(--text-secondary); margin: 8px 0 4px; }
-.modal-body .diff-text { font-size: 0.8rem; line-height: 1.7; padding: 10px; background: #f8f9fb; border-radius: 6px; }
 
-/* ===== Footer ===== */
+.settings-section { margin-top: 12px; }
+.settings-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap;
+}
+.settings-row label { font-size: 0.82rem; font-weight: 600; min-width: 100px; }
+.settings-row input {
+  padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 4px;
+  font-size: 0.82rem; font-family: var(--font); flex: 1; min-width: 150px;
+}
+
 .footer {
   text-align: center; padding: 16px; color: var(--text-secondary); font-size: 0.73rem;
 }
 
-/* ===== Mobile (< 768px) ===== */
 @media (max-width: 768px) {
   .header { padding: 10px 14px; }
   .header h1 { font-size: 1rem; }
-  .header .subtitle { display: none; }
   .container { padding: 8px; }
   .tab { padding: 7px 10px; font-size: 0.76rem; }
   .card-grid { grid-template-columns: 1fr; }
   .summary-grid { grid-template-columns: 1fr 1fr; }
-  .table-wrap table { min-width: 650px; }
-  .table-wrap th.week-col { min-width: 160px; }
-  .modal { width: 98%; max-height: 90vh; }
-  .input-actions { gap: 6px; }
   .btn { padding: 8px 12px; font-size: 0.8rem; }
   .login-box { padding: 28px 20px; }
-  .cell-expand, .tab, .btn { min-height: 40px; display: inline-flex; align-items: center; }
+  .form-table { font-size: 0.75rem; }
+  .form-table th, .form-table td { padding: 6px; }
+  .vcard-bank { font-size: 1.15rem; }
+  .vcard { border-radius: 10px; }
+  .vcard-header { padding: 12px 14px 6px; }
+  .vcard-body { padding: 0 14px 10px; }
+  .vcard-detail { font-size: 0.82rem; }
   .font-btn { width: 36px; height: 36px; }
 }
 @media (max-width: 480px) {
@@ -352,31 +364,29 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 </head>
 <body>
 
-<!-- ===== LOGIN SCREEN ===== -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <h1>🔒 授信进展周报</h1>
-    <p class="login-sub">请输入共享密码查看</p>
-    <label for="passwordInput">密码</label>
+    <h1>授信进展周报</h1>
+    <p class="login-sub">请输入密码查看</p>
     <div class="pw-wrap">
-      <input type="password" id="passwordInput" placeholder="输入共享密码" autofocus>
-      <button class="pw-eye" id="pwEye" onclick="togglePw()" title="显示密码">👁</button>
+      <input type="password" id="passwordInput" placeholder="输入密码" autofocus>
+      <button class="pw-eye" id="pwEye" onclick="togglePw()">显</button>
     </div>
     <button class="btn btn-primary" onclick="doLogin()">确认</button>
     <p class="login-error" id="loginError"></p>
-    <p class="login-hint">首次使用？联系管理员获取密码。<br>浏览器会记住登录状态，下次自动进入。</p>
+    <p class="login-hint">首次使用请联系管理员获取密码。<br>浏览器会记住登录状态。</p>
   </div>
 </div>
 
-<!-- ===== MAIN CONTENT ===== -->
 <div class="main-content" id="mainContent">
 
 <div class="header">
   <div>
-    <h1>授信进展周报对比工具</h1>
-    <div class="subtitle">粘贴原始文字 → 自动解析银行×周次 → 高亮变化</div>
+    <h1>授信进展周报</h1>
+    <div class="subtitle" id="headerSub">结构化数据对比</div>
   </div>
   <div class="header-right">
+    <span class="role-badge" id="roleBadge"></span>
     <div class="font-controls">
       <button class="font-btn" onclick="changeFont(-1)" title="缩小字号">A-</button>
       <span class="font-label" id="fontLabel">标准</span>
@@ -386,43 +396,86 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 </div>
 
 <div class="container">
-  <div class="input-section">
-    <div class="input-toggle open" id="inputToggle" onclick="toggleInput()">
-      <span class="arrow">▶</span> 数据输入区（粘贴原始周报文字）
+
+  <div class="editor-section" id="editorSection">
+    <div class="section-toggle open" id="formToggle" onclick="toggleSection('formToggle','formBody')">
+      <span class="arrow">▶</span> 数据录入
     </div>
-    <div class="input-body open" id="inputBody">
-      <div class="input-actions">
-        <button class="btn btn-primary" onclick="parseAndRender()">🔍 解析并对比</button>
-        <button class="btn btn-outline" onclick="loadDemo()">📋 加载示例</button>
-        <button class="btn btn-success" onclick="saveToCloud()" id="saveBtn" disabled>☁️ 保存到云端</button>
+    <div class="section-body open" id="formBody">
+      <div class="week-selector">
+        <select id="weekSelect" onchange="onWeekSelect()"></select>
+        <input type="date" id="newWeekDate" style="width:150px;">
+        <button class="btn btn-outline btn-sm" onclick="addNewWeek()">+ 新增周次</button>
+        <span style="font-size:0.78rem;color:var(--text-secondary);margin-left:8px;">选择周次后填写各银行进展</span>
+      </div>
+
+      <table class="form-table" id="formTable">
+        <thead>
+          <tr>
+            <th style="width:60px;">银行</th>
+            <th style="width:120px;">最新授信金额</th>
+            <th style="width:100px;">进展状态</th>
+            <th>具体进展详情</th>
+          </tr>
+        </thead>
+        <tbody id="formTableBody"></tbody>
+      </table>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+        <button class="btn btn-primary btn-sm" onclick="saveCurrentWeek()">保存本周数据</button>
+        <button class="btn btn-success btn-sm" onclick="saveToCloud()" id="saveBtn">☁️ 保存到云端</button>
         <span class="save-status" id="saveStatus"></span>
       </div>
-      <textarea id="rawInput" placeholder="在此粘贴原始周报文字，格式如：
-1、2026.4.30授信进展如下：
-中信：...
-浦发：...
-建行：...
-兴业：...
-浙商：...
 
-2、2026.5.9授信进展如下：
-..."></textarea>
+      <div class="section-toggle" id="recordsToggle" onclick="toggleSection('recordsToggle','recordsBody')">
+        <span class="arrow">▶</span> 已有记录
+      </div>
+      <div class="section-body" id="recordsBody">
+        <div class="record-list" id="recordList"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-toggle" id="settingsToggle" onclick="toggleSection('settingsToggle','settingsBody')">
+          <span class="arrow">▶</span> 密码设置
+        </div>
+        <div class="section-body" id="settingsBody">
+          <div class="settings-row">
+            <label>编辑密码</label>
+            <input type="text" id="editorPwInput" placeholder="编辑者用此密码登录">
+            <button class="btn btn-outline btn-sm" onclick="savePasswords()">保存密码</button>
+          </div>
+          <div class="settings-row">
+            <label>查看密码</label>
+            <input type="text" id="viewerPwInput" placeholder="查看者用此密码登录">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-toggle" id="importToggle" onclick="toggleSection('importToggle','importBody')">
+          <span class="arrow">▶</span> 导入旧版文字（高级）
+        </div>
+        <div class="section-body" id="importBody">
+          <textarea id="legacyInput" style="width:100%;min-height:120px;padding:10px;border:1.5px solid var(--border);border-radius:6px;font-size:0.8rem;" placeholder="粘贴旧版周报文字..."></textarea>
+          <button class="btn btn-outline btn-sm" onclick="importLegacy()" style="margin-top:6px;">导入并解析</button>
+          <p style="font-size:0.73rem;color:var(--text-secondary);margin-top:4px;">导入后状态将标记为"待补充"，请逐条确认。</p>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="tabs" id="tabBar">
     <button class="tab active" onclick="switchTab('table')">📊 表格视图</button>
     <button class="tab" onclick="switchTab('card')">🃏 卡片视图</button>
     <button class="tab" onclick="switchTab('diff')">🔍 差异详情</button>
     <button class="tab" onclick="switchTab('summary')">📈 总结仪表盘</button>
   </div>
 
-  <div class="legend">
-    <div class="legend-item"><span class="legend-dot" style="background:#28a745"></span> 进展</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#ffc107"></span> 微调</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#dc3545"></span> 停滞</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#17a2b8"></span> 新增</div>
-    <span style="color:var(--text-secondary);font-size:0.7rem;">删除线=删除 &nbsp; 绿色=新增</span>
+  <div class="legend" id="legendBar">
+    <div class="legend-item"><span class="legend-dot" style="background:var(--s-progress-border)"></span> 推进中</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--s-stopped-border)"></span> 停止</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--s-completed-border)"></span> 完成新增</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> 待补充</div>
   </div>
 
   <div class="warnings" id="warnings" style="display:none"></div>
@@ -431,9 +484,10 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   <div class="view" id="view-card"></div>
   <div class="view" id="view-diff"></div>
   <div class="view" id="view-summary"></div>
+  <div class="view" id="view-viewer"></div>
 </div>
 
-<div class="footer">授信进展周报对比工具 · 数据存储于云端 · 需密码访问</div>
+<div class="footer">授信进展周报 · 云端存储 · 需密码访问</div>
 
 </div>
 
@@ -454,20 +508,20 @@ const DATA_API = 'https://api.github.com/repos/loanprogresschecklist/credit-prog
 let ghToken = localStorage.getItem('credit_progress_gh_token') || '';
 
 async function loadDataFile() {
-  const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+  var res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
   if (!res.ok) throw new Error('无法加载数据: HTTP ' + res.status);
   return res.json();
 }
 
 async function saveDataFile(newContent) {
   if (!ghToken) throw new Error('未配置GitHub Token');
-  const getRes = await fetch(DATA_API, {
+  var getRes = await fetch(DATA_API, {
     headers: { Authorization: 'token ' + ghToken, Accept: 'application/vnd.github.v3+json' }
   });
   if (!getRes.ok) throw new Error('读取文件信息失败: HTTP ' + getRes.status);
-  const fileInfo = await getRes.json();
-  const sha = fileInfo.sha;
-  const putRes = await fetch(DATA_API, {
+  var fileInfo = await getRes.json();
+  var sha = fileInfo.sha;
+  var putRes = await fetch(DATA_API, {
     method: 'PUT',
     headers: { Authorization: 'token ' + ghToken, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -484,23 +538,160 @@ async function saveDataFile(newContent) {
 }
 
 // ====== GLOBAL STATE ======
-let reportData = null;
-let isLoggedIn = false;
+var appData = null;
+var userRole = '';
 
-// ====== PASSWORD TOGGLE ======
-function togglePw() {
-  var inp = document.getElementById('passwordInput');
-  var eye = document.getElementById('pwEye');
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    eye.textContent = '隐';
+// ====== DATA HELPERS ======
+function getWeekDates() {
+  var dates = new Set();
+  (appData.records || []).forEach(function(r) { dates.add(r.weekDate); });
+  return Array.from(dates).sort().reverse();
+}
+
+function getRecordsForWeek(weekDate) {
+  return (appData.records || []).filter(function(r) { return r.weekDate === weekDate; });
+}
+
+function getLatestRecords() {
+  var weeks = getWeekDates();
+  if (weeks.length === 0) return [];
+  return getRecordsForWeek(weeks[0]);
+}
+
+function getRecord(weekDate, bankName) {
+  return (appData.records || []).find(function(r) { return r.weekDate === weekDate && r.bankName === bankName; });
+}
+
+function upsertRecord(weekDate, bankName, creditAmount, progressDetail, status) {
+  var idx = (appData.records || []).findIndex(function(r) { return r.weekDate === weekDate && r.bankName === bankName; });
+  if (idx >= 0) {
+    appData.records[idx] = { weekDate: weekDate, bankName: bankName, creditAmount: creditAmount, progressDetail: progressDetail, status: status };
   } else {
-    inp.type = 'password';
-    eye.textContent = '显';
+    appData.records.push({ weekDate: weekDate, bankName: bankName, creditAmount: creditAmount, progressDetail: progressDetail, status: status });
   }
 }
 
+function deleteRecord(weekDate, bankName) {
+  appData.records = (appData.records || []).filter(function(r) { return !(r.weekDate === weekDate && r.bankName === bankName); });
+}
+
+function recordsToReportData() {
+  var records = appData.records || [];
+  var banks = appData.banks || [];
+  var weekMap = new Map();
+
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    if (!weekMap.has(r.weekDate)) weekMap.set(r.weekDate, {});
+    var parts = [];
+    if (r.creditAmount) parts.push('授信金额: ' + r.creditAmount);
+    if (r.status) parts.push('状态: ' + r.status);
+    else parts.push('状态: 待补充');
+    if (r.progressDetail) parts.push(r.progressDetail);
+    weekMap.get(r.weekDate)[r.bankName] = parts.join('\n');
+  }
+
+  var weeks = [];
+  var dates = Array.from(weekMap.keys()).sort();
+  dates.forEach(function(date, i) {
+    var banksObj = {};
+    for (var j = 0; j < banks.length; j++) {
+      var bank = banks[j];
+      if (weekMap.get(date)[bank] !== undefined) {
+        banksObj[bank] = weekMap.get(date)[bank];
+      }
+    }
+    if (Object.keys(banksObj).length > 0) {
+      weeks.push({ id: i + 1, date: date.replace(/-/g, '.'), banks: banksObj });
+    }
+  });
+
+  var duplicates = [];
+  for (var k = 1; k < weeks.length; k++) {
+    var prev = weeks[k - 1], curr = weeks[k];
+    var identical = true;
+    for (var b = 0; b < banks.length; b++) {
+      if ((prev.banks[banks[b]] || '') !== (curr.banks[banks[b]] || '')) { identical = false; break; }
+    }
+    if (identical) duplicates.push(k);
+  }
+
+  return { weeks: weeks, duplicates: duplicates };
+}
+
+function getStatusFor(weekDate, bankName) {
+  var r = getRecord(weekDate, bankName);
+  return r ? r.status : '';
+}
+
+function getLatestStatus(bankName) {
+  var latest = getLatestRecords();
+  var r = latest.find(function(x) { return x.bankName === bankName; });
+  return r ? r.status : '';
+}
+
+// ====== OLD DATA MIGRATION ======
+var BANK_NAMES = ['中信', '浦发', '建行', '兴业', '浙商', '招行', '民生', '光大', '平安', '广发', '华夏', '交行', '工行', '农行', '中行'];
+var BANK_ALIASES = {
+  '中信银行': '中信', '浦发银行': '浦发', '建设银行': '建行', '建行银行': '建行',
+  '兴业银行': '兴业', '浙商银行': '浙商', '招商银行': '招行', '民生银行': '民生',
+  '光大银行': '光大', '平安银行': '平安', '广发银行': '广发', '华夏银行': '华夏',
+  '交通银行': '交行', '工商银行': '工行', '农业银行': '农行', '中国银行': '中行'
+};
+
+function parseOldReports(rawText) {
+  if (!rawText.trim()) return [];
+  var text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  var weekHeaderRegex = /^(\d+)[、，,.\s]\s*(\d{4}\.\d{1,2}\.\d{1,2})/m;
+  var splitRegex = /\n(?=\d+[、，,.\s]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
+  var sections = text.split(splitRegex).filter(function(s) { return s.trim(); });
+  var records = [];
+
+  for (var si = 0; si < sections.length; si++) {
+    var section = sections[si].trim();
+    var headerMatch = section.match(weekHeaderRegex);
+    if (!headerMatch) continue;
+    var parts = headerMatch[2].split('.');
+    var weekDate = parts[0] + '-' + parts[1].padStart(2,'0') + '-' + (parts[2]||'01').padStart(2,'0');
+    var bodyText = section.substring(headerMatch[0].length).trim();
+
+    var bankPattern = BANK_NAMES.map(function(b) { return b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|');
+    var bankRegex = new RegExp('(' + bankPattern + ')[：:]\\s*([\\s\\S]*?)(?=\\n(?:' + bankPattern + ')[：:]|\\n\\d+[、，]|$)', 'g');
+    var match;
+    while ((match = bankRegex.exec(bodyText)) !== null) {
+      var bankName = match[1];
+      bankName = BANK_ALIASES[bankName] || bankName;
+      records.push({ weekDate: weekDate, bankName: bankName, creditAmount: '', progressDetail: match[2].trim(), status: '' });
+    }
+  }
+  return records;
+}
+
+function migrateOldData(oldData) {
+  var oldReport = oldData.report || '';
+  var records = parseOldReports(oldReport);
+  var banks = [];
+  var seen = new Set();
+  for (var i = 0; i < records.length; i++) {
+    if (!seen.has(records[i].bankName)) { seen.add(records[i].bankName); banks.push(records[i].bankName); }
+  }
+  return {
+    version: 2,
+    editorPassword: oldData.password || 'credit2024',
+    viewerPassword: oldData.password || 'credit2024',
+    banks: banks.length > 0 ? banks : ['中信', '浦发', '建行', '兴业', '浙商'],
+    records: records
+  };
+}
+
 // ====== AUTH ======
+function togglePw() {
+  var inp = document.getElementById('passwordInput');
+  var eye = document.getElementById('pwEye');
+  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '隐'; }
+  else { inp.type = 'password'; eye.textContent = '显'; }
+}
+
 async function doLogin() {
   var password = document.getElementById('passwordInput').value.trim();
   var errorEl = document.getElementById('loginError');
@@ -508,53 +699,297 @@ async function doLogin() {
   errorEl.style.display = 'none';
 
   try {
-    var data = await loadDataFile();
-    var storedPw = data.password || 'credit2024';
-    if (password !== storedPw) { errorEl.textContent = '密码错误'; errorEl.style.display = 'block'; return; }
-    loginSuccess(password, data.report || '');
+    var rawData = await loadDataFile();
+    if (!rawData.version || rawData.version < 2) {
+      rawData = migrateOldData(rawData);
+    }
+
+    if (password === rawData.editorPassword) {
+      loginSuccess('editor', rawData);
+    } else if (password === rawData.viewerPassword) {
+      loginSuccess('viewer', rawData);
+    } else {
+      errorEl.textContent = '密码错误';
+      errorEl.style.display = 'block';
+    }
   } catch (e) {
     console.error('Login error:', e);
-    errorEl.innerHTML = '云端连接失败: <b>' + (e.message||'').replace(/</g,'&lt;') + '</b><br><br><a href="#" onclick="skipLogin()" style="color:#3b6df0;font-weight:700;">跳过登录，离线使用</a>';
+    errorEl.innerHTML = '云端连接失败: <b>' + (e.message||'').replace(/</g,'&lt;') + '</b><br><br>可能是网络问题，请稍后重试';
     errorEl.style.display = 'block';
   }
 }
 
-function skipLogin() {
-  isLoggedIn = true;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainContent').classList.add('visible');
-  document.getElementById('saveBtn').style.display = 'none';
-  try {
-    var saved = localStorage.getItem('credit_progress_input');
-    if (saved) { document.getElementById('rawInput').value = saved; reportData = parseReports(saved); if (reportData && reportData.weeks.length > 0) renderAll(); }
-  } catch (e) {}
-}
+function loginSuccess(role, data) {
+  userRole = role;
+  appData = data;
+  if (!appData.banks || appData.banks.length === 0) {
+    appData.banks = ['中信', '浦发', '建行', '兴业', '浙商'];
+  }
+  if (!appData.records) appData.records = [];
 
-function loginSuccess(password, reportText) {
-  isLoggedIn = true;
+  localStorage.setItem('credit_progress_pw', document.getElementById('passwordInput').value);
+  localStorage.setItem('credit_progress_role', role);
+
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainContent').classList.add('visible');
-  localStorage.setItem('credit_progress_pw', password);
-  if (reportText) { document.getElementById('rawInput').value = reportText; reportData = parseReports(reportText); if (reportData && reportData.weeks.length > 0) renderAll(); }
-  document.getElementById('saveBtn').disabled = false;
+
+  setupUI();
+  refreshAll();
 }
 
 async function tryAutoLogin() {
   var savedPw = localStorage.getItem('credit_progress_pw');
-  if (!savedPw) return false;
+  var savedRole = localStorage.getItem('credit_progress_role');
+  if (!savedPw || !savedRole) return false;
   try {
-    var data = await loadDataFile();
-    if (savedPw !== (data.password || 'credit2024')) { localStorage.removeItem('credit_progress_pw'); return false; }
-    loginSuccess(savedPw, data.report || '');
-    return true;
+    var rawData = await loadDataFile();
+    if (!rawData.version || rawData.version < 2) {
+      rawData = migrateOldData(rawData);
+    }
+    var pwField = savedRole === 'editor' ? 'editorPassword' : 'viewerPassword';
+    if (savedPw === rawData[pwField]) {
+      document.getElementById('passwordInput').value = savedPw;
+      loginSuccess(savedRole, rawData);
+      return true;
+    }
   } catch (e) { console.log('Auto-login failed:', e.message); }
   return false;
 }
 
+// ====== UI SETUP ======
+function setupUI() {
+  var roleBadge = document.getElementById('roleBadge');
+  var editorSection = document.getElementById('editorSection');
+  var tabBar = document.getElementById('tabBar');
+  var legendBar = document.getElementById('legendBar');
+
+  if (userRole === 'editor') {
+    roleBadge.textContent = '编辑模式';
+    roleBadge.className = 'role-badge editor';
+    document.getElementById('headerSub').textContent = '结构化数据对比';
+    editorSection.style.display = 'block';
+    tabBar.style.display = 'flex';
+    legendBar.style.display = 'flex';
+    document.getElementById('saveBtn').style.display = '';
+    document.getElementById('view-viewer').classList.remove('active');
+    document.getElementById('view-table').classList.add('active');
+    document.getElementById('editorPwInput').value = appData.editorPassword || '';
+    document.getElementById('viewerPwInput').value = appData.viewerPassword || '';
+  } else {
+    roleBadge.textContent = '只读模式';
+    roleBadge.className = 'role-badge viewer';
+    document.getElementById('headerSub').textContent = '授信进展总览';
+    editorSection.style.display = 'none';
+    tabBar.style.display = 'none';
+    legendBar.style.display = 'flex';
+    document.getElementById('saveBtn').style.display = 'none';
+    ['view-table','view-card','view-diff','view-summary'].forEach(function(id) { document.getElementById(id).classList.remove('active'); });
+    document.getElementById('view-viewer').classList.add('active');
+  }
+}
+
+// ====== SECTION TOGGLE ======
+function toggleSection(toggleId, bodyId) {
+  document.getElementById(toggleId).classList.toggle('open');
+  document.getElementById(bodyId).classList.toggle('open');
+}
+
+// ====== WEEK MANAGEMENT ======
+function refreshWeekSelect() {
+  var sel = document.getElementById('weekSelect');
+  var dates = getWeekDates();
+  sel.innerHTML = dates.map(function(d) { return '<option value="' + d + '">' + d + '</option>'; }).join('');
+  if (dates.length === 0) {
+    sel.innerHTML = '<option value="">-- 请先新增周次 --</option>';
+  }
+}
+
+function addNewWeek() {
+  var input = document.getElementById('newWeekDate');
+  var dateStr = input.value;
+  if (!dateStr) { alert('请选择日期'); return; }
+  if (getWeekDates().includes(dateStr)) { alert('该周次已存在'); return; }
+  for (var i = 0; i < (appData.banks || []).length; i++) {
+    upsertRecord(dateStr, appData.banks[i], '', '', '');
+  }
+  refreshWeekSelect();
+  document.getElementById('weekSelect').value = dateStr;
+  onWeekSelect();
+  renderAll();
+}
+
+function onWeekSelect() {
+  var weekDate = document.getElementById('weekSelect').value;
+  if (!weekDate) return;
+  renderFormTable(weekDate);
+  renderRecordList(weekDate);
+}
+
+// ====== FORM TABLE ======
+function renderFormTable(weekDate) {
+  var banks = appData.banks || [];
+  var html = '';
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    var r = getRecord(weekDate, bank) || { creditAmount: '', progressDetail: '', status: '推进中' };
+    html += '<tr>';
+    html += '<td class="bank-cell">' + bank + '</td>';
+    html += '<td><input type="text" id="amt_' + bank.replace(/[^a-zA-Z一-鿿]/g,'') + '" value="' + escapeAttr(r.creditAmount) + '" placeholder="如: 5000万"></td>';
+    html += '<td><select id="st_' + bank.replace(/[^a-zA-Z一-鿿]/g,'') + '" style="background:' + getStatusBg(r.status||'') + ';color:' + getStatusColor(r.status||'') + ';" onchange="onStatusChange(this)">';
+    html += '<option value="推进中"' + (r.status==='推进中'?' selected':'') + '>推进中</option>';
+    html += '<option value="停止"' + (r.status==='停止'?' selected':'') + '>停止</option>';
+    html += '<option value="完成新增"' + (r.status==='完成新增'?' selected':'') + '>完成新增</option>';
+    html += '</select></td>';
+    html += '<td><textarea id="det_' + bank.replace(/[^a-zA-Z一-鿿]/g,'') + '" rows="2">' + escapeAttr(r.progressDetail) + '</textarea></td>';
+    html += '</tr>';
+  }
+  document.getElementById('formTableBody').innerHTML = html;
+}
+
+function onStatusChange(sel) {
+  sel.style.background = getStatusBg(sel.value);
+  sel.style.color = getStatusColor(sel.value);
+}
+
+function getStatusClass(s) {
+  if (s === '推进中') return 'progress';
+  if (s === '停止') return 'stopped';
+  if (s === '完成新增') return 'completed';
+  return 'empty';
+}
+
+function getStatusBg(s) {
+  if (s === '推进中') return '#dbeafe';
+  if (s === '停止') return '#fee2e2';
+  if (s === '完成新增') return '#dcfce7';
+  return '#fef3c7';
+}
+
+function getStatusColor(s) {
+  if (s === '推进中') return '#1e40af';
+  if (s === '停止') return '#991b1b';
+  if (s === '完成新增') return '#166534';
+  return '#92400e';
+}
+
+function escapeAttr(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function saveCurrentWeek() {
+  var weekDate = document.getElementById('weekSelect').value;
+  if (!weekDate) { alert('请先选择周次'); return; }
+  var banks = appData.banks || [];
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    var key = bank.replace(/[^a-zA-Z一-鿿]/g,'');
+    var amt = document.getElementById('amt_' + key);
+    var st = document.getElementById('st_' + key);
+    var det = document.getElementById('det_' + key);
+    if (!amt || !st || !det) continue;
+    upsertRecord(weekDate, bank, amt.value.trim(), det.value.trim(), st.value);
+  }
+  renderRecordList(weekDate);
+  renderAll();
+  document.getElementById('saveStatus').textContent = '已暂存（未同步云端）';
+  document.getElementById('saveStatus').className = 'save-status';
+}
+
+// ====== RECORD LIST ======
+function renderRecordList(weekDate) {
+  var records = getRecordsForWeek(weekDate);
+  var html = '';
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    var sc = getStatusClass(r.status);
+    html += '<div class="record-item">';
+    html += '<span class="bank-label">' + r.bankName + '</span>';
+    html += '<span class="status-badge ' + sc + '">' + (r.status || '待补充') + '</span>';
+    if (r.creditAmount) html += '<span style="font-size:0.78rem;">' + escapeAttr(r.creditAmount) + '</span>';
+    html += '<span class="detail-text">' + escapeAttr(r.progressDetail || '').substring(0, 60) + (r.progressDetail && r.progressDetail.length > 60 ? '...' : '') + '</span>';
+    html += '<span class="actions">';
+    html += '<button onclick="editRecord(\'' + r.weekDate + '\',\'' + r.bankName + '\')">编辑</button>';
+    html += '<button onclick="delRecord(\'' + r.weekDate + '\',\'' + r.bankName + '\')" style="color:#dc3545;">删除</button>';
+    html += '</span></div>';
+  }
+  document.getElementById('recordList').innerHTML = html || '<div style="color:#999;font-size:0.8rem;">暂无记录</div>';
+}
+
+function editRecord(weekDate, bankName) {
+  document.getElementById('weekSelect').value = weekDate;
+  renderFormTable(weekDate);
+  // Fill form with existing values
+  var r = getRecord(weekDate, bankName);
+  if (!r) return;
+  var key = bankName.replace(/[^a-zA-Z一-鿿]/g,'');
+  var amt = document.getElementById('amt_' + key);
+  var st = document.getElementById('st_' + key);
+  var det = document.getElementById('det_' + key);
+  if (amt) amt.value = r.creditAmount || '';
+  if (st) { st.value = r.status || '推进中'; onStatusChange(st); }
+  if (det) det.value = r.progressDetail || '';
+  document.getElementById('formTable').scrollIntoView({ behavior: 'smooth' });
+}
+
+function delRecord(weekDate, bankName) {
+  if (!confirm('确定删除 ' + bankName + ' 在 ' + weekDate + ' 的记录？')) return;
+  deleteRecord(weekDate, bankName);
+  renderRecordList(weekDate);
+  renderFormTable(weekDate);
+  renderAll();
+}
+
+// ====== IMPORT LEGACY ======
+function importLegacy() {
+  var rawText = document.getElementById('legacyInput').value;
+  if (!rawText.trim()) { alert('请粘贴旧版周报文字'); return; }
+  var parsed = parseOldReports(rawText);
+  if (parsed.length === 0) { alert('未能解析出有效数据'); return; }
+  for (var i = 0; i < parsed.length; i++) {
+    var r = parsed[i];
+    var existing = getRecord(r.weekDate, r.bankName);
+    if (!existing) upsertRecord(r.weekDate, r.bankName, '', r.progressDetail, '');
+    if (!appData.banks.includes(r.bankName)) appData.banks.push(r.bankName);
+  }
+  refreshWeekSelect();
+  var dates = getWeekDates();
+  if (dates.length > 0) {
+    document.getElementById('weekSelect').value = dates[0];
+    onWeekSelect();
+  }
+  renderAll();
+  document.getElementById('legacyInput').value = '';
+  alert('已导入 ' + parsed.length + ' 条记录。状态标记为"待补充"，请逐条确认。');
+}
+
+// ====== SAVE PASSWORDS ======
+function savePasswords() {
+  appData.editorPassword = document.getElementById('editorPwInput').value.trim() || 'credit2024';
+  appData.viewerPassword = document.getElementById('viewerPwInput').value.trim() || 'credit2024';
+  document.getElementById('saveStatus').textContent = '密码已更新（未同步云端）';
+  document.getElementById('saveStatus').className = 'save-status';
+}
+
 // ====== SAVE TO CLOUD ======
 async function saveToCloud() {
-  var rawText = document.getElementById('rawInput').value;
-  if (!rawText.trim()) { alert('没有数据可保存'); return; }
+  var weekDate = document.getElementById('weekSelect').value;
+  if (weekDate) {
+    var banks = appData.banks || [];
+    for (var i = 0; i < banks.length; i++) {
+      var bank = banks[i];
+      var key = bank.replace(/[^a-zA-Z一-鿿]/g,'');
+      var amt = document.getElementById('amt_' + key);
+      var st = document.getElementById('st_' + key);
+      var det = document.getElementById('det_' + key);
+      if (amt && st && det && (amt.value || det.value)) {
+        upsertRecord(weekDate, bank, amt.value.trim(), det.value.trim(), st.value);
+      }
+    }
+  }
+
+  appData.editorPassword = document.getElementById('editorPwInput').value.trim() || appData.editorPassword || 'credit2024';
+  appData.viewerPassword = document.getElementById('viewerPwInput').value.trim() || appData.viewerPassword || 'credit2024';
+
   var saveBtn = document.getElementById('saveBtn');
   var saveStatus = document.getElementById('saveStatus');
 
@@ -570,13 +1005,10 @@ async function saveToCloud() {
   saveStatus.className = 'save-status';
 
   try {
-    var data = await loadDataFile();
-    data.report = rawText;
-    if (!data.password) data.password = 'credit2024';
-    await saveDataFile(data);
+    await saveDataFile(appData);
     saveStatus.textContent = '已保存到云端';
     saveStatus.className = 'save-status success';
-    try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
+    renderAll();
     setTimeout(function() { saveStatus.textContent = ''; }, 3000);
   } catch (e) {
     saveStatus.textContent = '保存失败: ' + (e.message||'').replace(/</g,'&lt;');
@@ -585,150 +1017,88 @@ async function saveToCloud() {
   saveBtn.disabled = false;
 }
 
-// ====== FONT SIZE ======// ====== FONT SIZE ======
-// ====== FONT SIZE ======
-let fontScale = 1;
-const fontLabels = ['小号', '标准', '大号', '特大', '超大'];
-
-function changeFont(delta) {
-  fontScale = Math.max(0.75, Math.min(1.5, fontScale + delta * 0.125));
-  document.documentElement.style.setProperty('--font-scale', fontScale);
-  const idx = Math.round((fontScale - 0.75) / 0.25);
-  document.getElementById('fontLabel').textContent = fontLabels[Math.max(0, Math.min(4, idx))];
-  localStorage.setItem('credit_progress_font_scale', fontScale);
+// ====== REFRESH ALL ======
+function refreshAll() {
+  refreshWeekSelect();
+  var dates = getWeekDates();
+  if (dates.length > 0) {
+    document.getElementById('weekSelect').value = dates[0];
+    onWeekSelect();
+  }
+  renderAll();
 }
 
-(function() {
-  const saved = localStorage.getItem('credit_progress_font_scale');
-  if (saved) {
-    fontScale = parseFloat(saved);
-    document.documentElement.style.setProperty('--font-scale', fontScale);
-    const idx = Math.round((fontScale - 0.75) / 0.25);
-    document.getElementById('fontLabel').textContent = fontLabels[Math.max(0, Math.min(4, idx))];
+function renderAll() {
+  var data = recordsToReportData();
+  if (userRole === 'editor') {
+    document.getElementById('view-table').innerHTML = renderTableView(data);
+    document.getElementById('view-card').innerHTML = renderCardView(data);
+    document.getElementById('view-diff').innerHTML = renderDiffView(data);
+    document.getElementById('view-summary').innerHTML = renderSummaryView(data);
   }
-})();
+  document.getElementById('view-viewer').innerHTML = renderViewerView();
 
-// ====== PARSER ======
-const BANK_NAMES = ['中信', '浦发', '建行', '兴业', '浙商', '招行', '民生', '光大', '平安', '广发', '华夏', '交行', '工行', '农行', '中行'];
-const BANK_ALIASES = {
-  '中信银行': '中信', '浦发银行': '浦发', '建设银行': '建行', '建行银行': '建行',
-  '兴业银行': '兴业', '浙商银行': '浙商', '招商银行': '招行', '民生银行': '民生',
-  '光大银行': '光大', '平安银行': '平安', '广发银行': '广发', '华夏银行': '华夏',
-  '交通银行': '交行', '工商银行': '工行', '农业银行': '农行', '中国银行': '中行',
-};
-
-function parseReports(rawText) {
-  if (!rawText.trim()) return null;
-
-  let text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const weekHeaderRegex = /^(\d+)[、，,.\s]\s*(\d{4}\.\d{1,2}\.\d{1,2})[^\n]*?(?:进展|授信|周报|汇报)/m;
-  const splitRegex = /\n(?=\d+[、，,.\s]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
-
-  const sections = text.split(splitRegex).filter(s => s.trim());
-  const weeks = [];
-
-  for (let i = 0; i < sections.length; i++) {
-    const section = sections[i].trim();
-    const headerMatch = section.match(weekHeaderRegex);
-    if (!headerMatch) continue;
-
-    const date = headerMatch[2];
-    const id = parseInt(headerMatch[1]);
-    const banks = {};
-    const bodyText = section.substring(headerMatch[0].length).trim();
-
-    const bankPattern = BANK_NAMES.map(b => b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    const bankRegex = new RegExp(`(${bankPattern})[：:]\\s*([\\s\\S]*?)(?=\\n(?:${bankPattern})[：:]|\\n\\d+[、，]|$)`, 'g');
-
-    let match;
-    while ((match = bankRegex.exec(bodyText)) !== null) {
-      let bankName = match[1];
-      const content = match[2].trim();
-      bankName = BANK_ALIASES[bankName] || bankName;
-      banks[bankName] = content;
-    }
-
-    const fullBankRegex = new RegExp(`(${Object.keys(BANK_ALIASES).join('|')})[：:]\\s*([\\s\\S]*?)(?=\\n(?:${Object.keys(BANK_ALIASES).join('|')}|${bankPattern})[：:]|\\n\\d+[、，]|$)`, 'g');
-    while ((match = fullBankRegex.exec(bodyText)) !== null) {
-      let bankName = BANK_ALIASES[match[1]] || match[1];
-      const content = match[2].trim();
-      if (!banks[bankName]) banks[bankName] = content;
-    }
-
-    if (Object.keys(banks).length > 0) weeks.push({ id, date, banks });
+  var emptyCount = (appData.records || []).filter(function(r) { return !r.status; }).length;
+  var warningsEl = document.getElementById('warnings');
+  if (emptyCount > 0 && userRole === 'editor') {
+    warningsEl.style.display = 'block';
+    warningsEl.innerHTML = '<strong>有 ' + emptyCount + ' 条记录状态为"待补充"，请逐条确认。</strong>';
+  } else if (data.duplicates.length > 0) {
+    warningsEl.style.display = 'block';
+    warningsEl.innerHTML = '<strong>检测到重复周次：</strong>' +
+      data.duplicates.map(function(idx) { return '第' + data.weeks[idx].id + '条（' + data.weeks[idx].date + '）与上一条完全一致。'; }).join('；');
+  } else {
+    warningsEl.style.display = 'none';
   }
-
-  const duplicates = [];
-  for (let i = 1; i < weeks.length; i++) {
-    const prev = weeks[i - 1];
-    const curr = weeks[i];
-    if (prev.date === curr.date) {
-      const prevBanks = Object.keys(prev.banks).sort().join(',');
-      const currBanks = Object.keys(curr.banks).sort().join(',');
-      if (prevBanks === currBanks) {
-        let identical = true;
-        for (const b of Object.keys(prev.banks)) {
-          if ((prev.banks[b] || '').trim() !== (curr.banks[b] || '').trim()) { identical = false; break; }
-        }
-        if (identical) duplicates.push(i);
-      }
-    }
-  }
-
-  return { weeks, duplicates };
 }
 
 // ====== TOKENIZER ======
 function tokenize(text) {
   if (!text) return [];
-  const tokens = [];
-  const regex = /([^。，、；：？！\n\r]+|[。，、；：？！\n\r]+)/g;
-  let match;
+  var tokens = [];
+  var regex = /([^。，、；：？！\n\r]+|[。，、；：？！\n\r]+)/g;
+  var match;
   while ((match = regex.exec(text)) !== null) {
-    const seg = match[1].trim();
+    var seg = match[1].trim();
     if (seg) {
       if (/[a-zA-Z0-9]/.test(seg) && /\s/.test(seg)) {
-        seg.split(/\s+/).forEach(s => { if (s) tokens.push(s); });
-      } else {
-        tokens.push(seg);
-      }
+        seg.split(/\s+/).forEach(function(s) { if (s) tokens.push(s); });
+      } else { tokens.push(seg); }
     }
   }
   if (tokens.length === 0 && text.trim()) tokens.push(text.trim());
   return tokens;
 }
 
-// ====== MYERS DIFF ======
 function myersDiff(oldTokens, newTokens) {
-  const n = oldTokens.length, m = newTokens.length, max = n + m;
-  const v = new Array(2 * max + 1);
-  const trace = [];
+  var n = oldTokens.length, m = newTokens.length, max = n + m;
+  var v = new Array(2 * max + 1);
+  var trace = [];
   v[max + 1] = 0;
-
-  for (let d = 0; d <= max; d++) {
-    trace.push([...v]);
-    for (let k = -d; k <= d; k += 2) {
-      const idx = max + k;
-      let x = (k === -d || (k !== d && v[idx - 1] < v[idx + 1])) ? v[idx + 1] : v[idx - 1] + 1;
-      let y = x - k;
+  for (var d = 0; d <= max; d++) {
+    trace.push([].concat(v));
+    for (var k = -d; k <= d; k += 2) {
+      var idx = max + k;
+      var x = (k === -d || (k !== d && v[idx - 1] < v[idx + 1])) ? v[idx + 1] : v[idx - 1] + 1;
+      var y = x - k;
       while (x < n && y < m && oldTokens[x] === newTokens[y]) { x++; y++; }
       v[idx] = x;
       if (x >= n && y >= m) return backtrack(trace, d, k, max, oldTokens, newTokens, n, m);
     }
   }
-  return [{ type: 'remove', tokens: [...oldTokens] }, { type: 'add', tokens: [...newTokens] }];
+  return [{ type: 'remove', tokens: [].concat(oldTokens) }, { type: 'add', tokens: [].concat(newTokens) }];
 }
 
 function backtrack(trace, d, k, max, oldTokens, newTokens, n, m) {
-  const chunks = [];
-  let x = n, y = m;
-  for (let depth = d; depth >= 0; depth--) {
-    const v = trace[depth];
-    const idx = max + k;
-    const prevX = (k === -depth || (k !== depth && v[idx - 1] < v[idx + 1])) ? v[idx + 1] : v[idx - 1] + 1;
-    const prevY = prevX - (k === -depth || (k !== depth && v[idx - 1] < v[idx + 1]) ? k + 1 : k - 1);
-    const prevK = (k === -depth || (k !== depth && v[idx - 1] < v[idx + 1])) ? k + 1 : k - 1;
-    const diagLen = x - prevX;
+  var chunks = [];
+  var x = n, y = m;
+  for (var depth = d; depth >= 0; depth--) {
+    var v = trace[depth];
+    var idx = max + k;
+    var prevX = (k === -depth || (k !== depth && v[idx - 1] < v[idx + 1])) ? v[idx + 1] : v[idx - 1] + 1;
+    var prevY = prevX - (k === -depth || (k !== depth && v[idx - 1] < v[idx + 1]) ? k + 1 : k - 1);
+    var prevK = (k === -depth || (k !== depth && v[idx - 1] < v[idx + 1])) ? k + 1 : k - 1;
+    var diagLen = x - prevX;
     if (diagLen > 0) chunks.unshift({ type: 'equal', tokens: oldTokens.slice(prevX, x) });
     if (depth > 0) {
       if (prevX < x) chunks.unshift({ type: 'remove', tokens: oldTokens.slice(prevX, x) });
@@ -740,110 +1110,117 @@ function backtrack(trace, d, k, max, oldTokens, newTokens, n, m) {
 }
 
 function mergeAdjacent(chunks) {
-  const merged = [];
-  for (const chunk of chunks) {
-    if (merged.length > 0 && merged[merged.length - 1].type === chunk.type) {
-      merged[merged.length - 1].tokens.push(...chunk.tokens);
-    } else {
-      merged.push({ ...chunk });
-    }
+  var merged = [];
+  for (var i = 0; i < chunks.length; i++) {
+    if (merged.length > 0 && merged[merged.length - 1].type === chunks[i].type) {
+      merged[merged.length - 1].tokens = merged[merged.length - 1].tokens.concat(chunks[i].tokens);
+    } else { merged.push({ type: chunks[i].type, tokens: chunks[i].tokens }); }
   }
   return merged;
 }
 
-// ====== CHANGE CLASSIFIER ======
-function classifyChange(oldText, newText) {
-  if (!oldText && !newText) return 'empty';
-  if (!oldText && newText) return 'new';
-  if (oldText && !newText) return 'removed';
-  if (oldText.trim() === newText.trim()) return 'stalled';
-
-  const oldTokens = tokenize(oldText), newTokens = tokenize(newText);
-  const totalTokens = Math.max(oldTokens.length, newTokens.length, 1);
-  const diff = myersDiff(oldTokens, newTokens);
-  let changedTokens = 0;
-  for (const chunk of diff) { if (chunk.type !== 'equal') changedTokens += chunk.tokens.length; }
-
-  const ratio = changedTokens / totalTokens;
-  if (ratio < 0.08) return 'stalled';
-  if (ratio < 0.25) return 'minor';
-  return 'progress';
-}
-
-// ====== RENDER HELPERS ======
-function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function renderDiffHTML(oldText, newText) {
   if (!oldText && !newText) return '';
-  if (!oldText) return `<span class="diff-add">${escapeHTML(newText)}</span>`;
-  if (!newText) return `<span class="diff-del">${escapeHTML(oldText)}</span>`;
-  const oldTokens = tokenize(oldText), newTokens = tokenize(newText);
-  const diff = myersDiff(oldTokens, newTokens);
-  let html = '';
-  for (const chunk of diff) {
-    const text = escapeHTML(chunk.tokens.join(''));
-    if (chunk.type === 'equal') html += text;
-    else if (chunk.type === 'add') html += `<span class="diff-add">${text}</span>`;
-    else if (chunk.type === 'remove') html += `<span class="diff-del">${text}</span>`;
+  if (!oldText) return '<span class="diff-add">' + escHTML(newText) + '</span>';
+  if (!newText) return '<span class="diff-del">' + escHTML(oldText) + '</span>';
+  var diff = myersDiff(tokenize(oldText), tokenize(newText));
+  var html = '';
+  for (var i = 0; i < diff.length; i++) {
+    var text = escHTML(diff[i].tokens.join(''));
+    if (diff[i].type === 'equal') html += text;
+    else if (diff[i].type === 'add') html += '<span class="diff-add">' + text + '</span>';
+    else html += '<span class="diff-del">' + text + '</span>';
   }
   return html;
 }
 
-function getBadgeHTML(changeType) {
-  const labels = { progress: '进展', minor: '微调', stalled: '停滞', new: '新增', removed: '移除', empty: '' };
-  return `<span class="cell-badge ${changeType}">${labels[changeType] || ''}</span>`;
+function escHTML(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
-// ====== MODAL ======
-function openModal(title, bodyHTML) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = bodyHTML;
-  document.getElementById('modalOverlay').classList.add('open');
-}
-function closeModal(event) {
-  if (event && event.target !== document.getElementById('modalOverlay')) return;
-  document.getElementById('modalOverlay').classList.remove('open');
+// ====== RENDER: VIEWER CARD VIEW ======
+function renderViewerView() {
+  var banks = appData.banks || [];
+  var latest = getLatestRecords();
+  if (latest.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);">暂无数据</div>';
+
+  var html = '<div class="viewer-cards">';
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    var r = latest.find(function(x) { return x.bankName === bank; });
+    if (!r) continue;
+    var sc = getStatusClass(r.status);
+    var statusLabel = r.status || '待补充';
+
+    var history = (appData.records || []).filter(function(x) { return x.bankName === bank; }).sort(function(a,b) { return b.weekDate.localeCompare(a.weekDate); });
+
+    html += '<div class="vcard s-' + sc + '">';
+    html += '<div class="vcard-header"><span class="vcard-bank">' + bank + '</span><span class="status-badge ' + sc + '">' + statusLabel + '</span></div>';
+    html += '<div class="vcard-body">';
+    if (r.creditAmount) html += '<div class="vcard-amount">最新授信金额: <b>' + escHTML(r.creditAmount) + '</b></div>';
+    html += '<div class="vcard-date">' + r.weekDate + '</div>';
+    if (r.progressDetail) html += '<div class="vcard-detail">' + escHTML(r.progressDetail) + '</div>';
+    html += '</div>';
+
+    if (history.length > 1) {
+      var hid = 'hist_' + bank.replace(/[^a-zA-Z0-9]/g,'');
+      html += '<div class="vcard-history-toggle" onclick="toggleHistory(\'' + hid + '\')">查看历史 (' + (history.length - 1) + '条) ▼</div>';
+      html += '<div class="vcard-history" id="' + hid + '">';
+      for (var j = 1; j < history.length; j++) {
+        var h = history[j];
+        html += '<div class="vcard-week"><div class="vcard-week-date">' + h.weekDate + ' <span class="status-badge ' + getStatusClass(h.status) + '" style="font-size:0.65rem;">' + (h.status||'待补充') + '</span></div>';
+        if (h.creditAmount) html += '<div style="font-size:0.76rem;">授信金额: ' + escHTML(h.creditAmount) + '</div>';
+        if (h.progressDetail) html += '<div style="font-size:0.76rem;color:var(--text-secondary);">' + escHTML(h.progressDetail) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
 }
 
-// ====== RENDER: TABLE VIEW ======
+function toggleHistory(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ====== RENDER: TABLE VIEW (Editor) ======
 function renderTableView(data) {
-  const { weeks, duplicates } = data;
-  const allBanks = [];
-  const seen = new Set();
-  for (const w of weeks) { for (const b of Object.keys(w.banks)) { if (!seen.has(b)) { seen.add(b); allBanks.push(b); } } }
-  allBanks.sort();
+  var weeks = data.weeks;
+  var duplicates = data.duplicates;
+  var banks = appData.banks || [];
 
-  let html = '<div class="table-wrap"><table><thead><tr><th class="bank-col">银行</th>';
-  for (let i = 0; i < weeks.length; i++) {
-    html += `<th class="week-col">${weeks[i].date}${duplicates.includes(i) ? ' ⚠️' : ''}</th>`;
+  var html = '<div class="table-wrap"><table><thead><tr><th class="bank-col">银行</th>';
+  for (var i = 0; i < weeks.length; i++) {
+    html += '<th class="week-col">' + weeks[i].date + (duplicates.includes(i) ? ' ⚠️' : '') + '</th>';
   }
   html += '</tr></thead><tbody>';
 
-  for (const bank of allBanks) {
-    html += `<tr><td class="bank-name">${bank}</td>`;
-    for (let i = 0; i < weeks.length; i++) {
-      const currentText = weeks[i].banks[bank] || '';
-      const prevText = i > 0 ? (weeks[i - 1].banks[bank] || '') : '';
-      let changeType = 'empty';
-      if (i === 0) changeType = currentText ? 'new' : 'empty';
-      else changeType = classifyChange(prevText, currentText);
-      const isDup = duplicates.includes(i);
+  for (var bi = 0; bi < banks.length; bi++) {
+    var bank = banks[bi];
+    html += '<tr><td class="bank-name">' + bank + '</td>';
+    for (var wi = 0; wi < weeks.length; wi++) {
+      var text = weeks[wi].banks[bank] || '';
+      var status = getStatusFor(weeks[wi].date.replace(/\./g, '-'), bank);
+      var sc = getStatusClass(status);
 
       html += '<td><div class="cell-content">';
-      if (isDup) html += '<span class="cell-badge dup">⚠️ 与上周重复</span>';
-      else if (changeType !== 'empty') html += getBadgeHTML(changeType);
+      if (status) html += '<span class="status-badge ' + sc + '">' + status + '</span>';
+      else if (text) html += '<span class="status-badge empty">待补充</span>';
 
-      if (currentText) {
-        const textId = `t-${bank.replace(/[^a-zA-Z一-鿿]/g,'')}-${i}`;
-        const isLong = currentText.length > 100;
-        html += `<div class="cell-text ${isLong ? 'collapsed' : ''}" id="${textId}">${escapeHTML(currentText)}</div>`;
-        if (isLong) html += `<span class="cell-expand" onclick="expandCell('${textId}',this)">展开全文 ▼</span>`;
-        if (i > 0 && prevText && changeType !== 'stalled') {
-          html += `<span class="cell-expand" onclick="showDiffModal('${bank}','${weeks[i-1].date}','${weeks[i].date}',\`${escapeHTML(prevText).replace(/`/g,'\\`')}\`,\`${escapeHTML(currentText).replace(/`/g,'\\`')}\`)">对比上周 →</span>`;
+      if (text) {
+        var textId = 'tbl_' + bank.replace(/[^a-zA-Z0-9]/g,'') + '_' + wi;
+        var isLong = text.length > 100;
+        html += '<div class="cell-text ' + (isLong ? 'collapsed' : '') + '" id="' + textId + '">' + escHTML(text) + '</div>';
+        if (isLong) html += '<span class="cell-expand" onclick="expandCell(\'' + textId + '\',this)">展开全文 ▼</span>';
+        if (wi > 0) {
+          var prevText = weeks[wi-1].banks[bank] || '';
+          if (prevText && prevText !== text) {
+            html += '<span class="cell-expand" onclick="showDiffModal(\'' + bank + '\',\'' + weeks[wi-1].date + '\',\'' + weeks[wi].date + '\',\`' + escHTML(prevText).replace(/`/g,'\\`') + '\`,\`' + escHTML(text).replace(/`/g,'\\`') + '\`)">对比上周 →</span>';
+          }
         }
       } else {
         html += '<span style="color:#999;font-size:0.78rem;">—</span>';
@@ -857,50 +1234,31 @@ function renderTableView(data) {
 }
 
 function expandCell(textId, el) {
-  const cell = document.getElementById(textId);
+  var cell = document.getElementById(textId);
   if (cell) { cell.classList.remove('collapsed'); el.style.display = 'none'; }
 }
 
 function showDiffModal(bank, oldDate, newDate, oldText, newText) {
-  const diffHTML = renderDiffHTML(oldText, newText);
-  openModal(`${bank} · ${oldDate} → ${newDate}`, `
-    <h4>变化对比</h4>
-    <div class="diff-text">${diffHTML}</div>
-    <p style="margin-top:10px;font-size:0.76rem;color:var(--text-secondary);">
-      <span class="diff-add">绿色</span> = 新增 &nbsp;
-      <span class="diff-del">红色删除线</span> = 删除
-    </p>`);
+  var diffHTML = renderDiffHTML(oldText, newText);
+  openModal(bank + ' · ' + oldDate + ' → ' + newDate, '<h4>变化对比</h4><div style="font-size:0.82rem;line-height:1.7;padding:10px;background:#f8f9fb;border-radius:6px;">' + diffHTML + '</div>');
 }
 
-// ====== RENDER: CARD VIEW ======
+// ====== RENDER: CARD VIEW (Editor) ======
 function renderCardView(data) {
-  const { weeks, duplicates } = data;
-  const allBanks = [];
-  const seen = new Set();
-  for (const w of weeks) { for (const b of Object.keys(w.banks)) { if (!seen.has(b)) { seen.add(b); allBanks.push(b); } } }
-  allBanks.sort();
-
-  let html = '<div class="card-grid">';
-  for (const bank of allBanks) {
-    html += `<div class="card"><div class="card-header">${bank}</div><div class="card-body">`;
-    for (let i = 0; i < weeks.length; i++) {
-      const currentText = weeks[i].banks[bank] || '';
-      const prevText = i > 0 ? (weeks[i - 1].banks[bank] || '') : '';
-      let changeType = 'new';
-      if (i > 0) changeType = classifyChange(prevText, currentText);
-      const isDup = duplicates.includes(i);
-      let cssClass = changeType;
-      if (isDup) cssClass = 'stalled';
-
-      html += `<div class="card-week ${cssClass}"><div class="card-week-date">${weeks[i].date}`;
-      if (isDup) html += '<span class="badge" style="background:#fce4e4;color:#a71d2a;">⚠️重复</span>';
-      else if (changeType === 'progress') html += '<span class="badge" style="background:#d4edda;color:#155724;">进展</span>';
-      else if (changeType === 'minor') html += '<span class="badge" style="background:#fff3cd;color:#856404;">微调</span>';
-      else if (changeType === 'stalled') html += '<span class="badge" style="background:#fce4e4;color:#a71d2a;">停滞</span>';
-      else html += '<span class="badge" style="background:#d1ecf1;color:#0c5460;">首周</span>';
-      html += '</div>';
-      html += currentText ? `<div class="card-week-text">${escapeHTML(currentText)}</div>` : '<div class="card-week-text" style="color:#999;">—</div>';
-      html += '</div>';
+  var weeks = data.weeks;
+  var banks = appData.banks || [];
+  var html = '<div class="card-grid">';
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    html += '<div class="card"><div class="card-header">' + bank + '</div><div class="card-body">';
+    for (var j = 0; j < weeks.length; j++) {
+      var text = weeks[j].banks[bank];
+      if (!text) continue;
+      var status = getStatusFor(weeks[j].date.replace(/\./g, '-'), bank);
+      var sc = getStatusClass(status);
+      html += '<div class="card-week"><div class="card-week-date">' + weeks[j].date;
+      if (status) html += ' <span class="status-badge ' + sc + '">' + status + '</span>';
+      html += '</div><div class="card-week-text">' + escHTML(text) + '</div></div>';
     }
     html += '</div></div>';
   }
@@ -908,190 +1266,139 @@ function renderCardView(data) {
   return html;
 }
 
-// ====== RENDER: DIFF DETAIL VIEW ======
+// ====== RENDER: DIFF VIEW (Editor) ======
 function renderDiffView(data) {
-  const { weeks, duplicates } = data;
-  const allBanks = [];
-  const seen = new Set();
-  for (const w of weeks) { for (const b of Object.keys(w.banks)) { if (!seen.has(b)) { seen.add(b); allBanks.push(b); } } }
-  allBanks.sort();
+  var weeks = data.weeks;
+  var banks = appData.banks || [];
+  var changes = [];
 
-  const changes = [];
-  for (const bank of allBanks) {
-    for (let i = 1; i < weeks.length; i++) {
-      const oldText = weeks[i - 1].banks[bank] || '';
-      const newText = weeks[i].banks[bank] || '';
-      const changeType = classifyChange(oldText, newText);
-      if (changeType === 'empty') continue;
-      const diff = myersDiff(tokenize(oldText), tokenize(newText));
-      let changedCount = 0;
-      for (const chunk of diff) { if (chunk.type !== 'equal') changedCount += chunk.tokens.length; }
-      changes.push({ bank, oldDate: weeks[i-1].date, newDate: weeks[i].date, changeType, changedCount, oldText, newText, diff, isDup: duplicates.includes(i) });
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    for (var j = 1; j < weeks.length; j++) {
+      var oldText = weeks[j-1].banks[bank] || '';
+      var newText = weeks[j].banks[bank] || '';
+      if (!oldText && !newText) continue;
+      var status = getStatusFor(weeks[j].date.replace(/\./g, '-'), bank);
+      var diff = myersDiff(tokenize(oldText), tokenize(newText));
+      var changedCount = 0;
+      for (var d = 0; d < diff.length; d++) { if (diff[d].type !== 'equal') changedCount += diff[d].tokens.length; }
+      changes.push({ bank: bank, oldDate: weeks[j-1].date, newDate: weeks[j].date, status: status, changedCount: changedCount, oldText: oldText, newText: newText });
     }
   }
 
-  const typeOrder = { progress: 0, minor: 1, stalled: 2, new: 3, removed: 4 };
-  changes.sort((a, b) => {
-    if (a.isDup !== b.isDup) return a.isDup ? 1 : -1;
-    if (a.changeType !== b.changeType) return (typeOrder[a.changeType]||5) - (typeOrder[b.changeType]||5);
-    return b.changedCount - a.changedCount;
-  });
+  if (changes.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);">暂无数据</div>';
 
-  if (changes.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);">暂无足够数据对比</div>';
+  changes.sort(function(a, b) { return b.changedCount - a.changedCount; });
 
-  let html = '<div class="diff-list">';
-  for (const c of changes) {
-    html += `<div class="diff-item ${c.changeType}"><div class="diff-item-header"><span class="diff-item-bank">${c.bank}</span><span class="diff-item-weeks">${c.oldDate} → ${c.newDate}</span>${getBadgeHTML(c.changeType)}${c.isDup ? '<span class="cell-badge dup">⚠️重复</span>' : ''}</div>`;
-    html += `<div class="diff-item-body">${c.isDup ? '<strong>⚠️ 与上周完全一致，可能是复制粘贴错误。</strong>' : renderDiffHTML(c.oldText, c.newText)}</div></div>`;
+  var html = '<div class="diff-list">';
+  for (var c = 0; c < changes.length; c++) {
+    var ch = changes[c];
+    var sc = getStatusClass(ch.status);
+    html += '<div class="diff-item"><div class="diff-item-header"><span class="diff-item-bank">' + ch.bank + '</span><span class="diff-item-weeks">' + ch.oldDate + ' → ' + ch.newDate + '</span>';
+    if (ch.status) html += '<span class="status-badge ' + sc + '">' + ch.status + '</span>';
+    html += '<span style="font-size:0.7rem;color:var(--text-secondary);">' + ch.changedCount + '处变化</span></div>';
+    html += '<div class="diff-item-body">' + renderDiffHTML(ch.oldText, ch.newText) + '</div></div>';
   }
   html += '</div>';
   return html;
 }
 
-// ====== RENDER: SUMMARY VIEW ======
+// ====== RENDER: SUMMARY (Editor) ======
 function renderSummaryView(data) {
-  const { weeks, duplicates } = data;
-  const allBanks = [];
-  const seen = new Set();
-  for (const w of weeks) { for (const b of Object.keys(w.banks)) { if (!seen.has(b)) { seen.add(b); allBanks.push(b); } } }
-  allBanks.sort();
+  var banks = appData.banks || [];
+  var records = appData.records || [];
+  var weeks = data.weeks;
 
-  const bankStats = [];
-  for (const bank of allBanks) {
-    let progress = 0, minor = 0, stalled = 0, total = 0;
-    for (let i = 1; i < weeks.length; i++) {
-      const ct = classifyChange(weeks[i-1].banks[bank]||'', weeks[i].banks[bank]||'');
-      if (ct === 'empty') continue;
-      total++;
-      if (ct === 'progress') progress++; else if (ct === 'minor') minor++; else if (ct === 'stalled') stalled++;
+  var bankStats = [];
+  for (var i = 0; i < banks.length; i++) {
+    var bank = banks[i];
+    var progress = 0, stopped = 0, completed = 0, empty = 0;
+    var bankRecords = records.filter(function(r) { return r.bankName === bank; });
+    for (var j = 0; j < bankRecords.length; j++) {
+      if (bankRecords[j].status === '推进中') progress++;
+      else if (bankRecords[j].status === '停止') stopped++;
+      else if (bankRecords[j].status === '完成新增') completed++;
+      else empty++;
     }
-    bankStats.push({ bank, progress, minor, stalled, total, score: total > 0 ? Math.round(progress/total*100) : 0 });
+    var total = bankRecords.length;
+    bankStats.push({ bank: bank, progress: progress, stopped: stopped, completed: completed, empty: empty, total: total, score: total > 0 ? Math.round((progress + completed) / total * 100) : 0 });
   }
 
-  let totalComparisons = 0, totalProgress = 0, totalMinor = 0, totalStalled = 0;
-  for (const bs of bankStats) { totalComparisons += bs.total; totalProgress += bs.progress; totalMinor += bs.minor; totalStalled += bs.stalled; }
-
-  let html = '';
-  if (duplicates.length > 0) {
-    html += '<div class="warnings"><strong>⚠️ 检测到重复周次：</strong>' +
-      duplicates.map(idx => `第${weeks[idx].id}条（${weeks[idx].date}）与上一条完全一致，可能为复制粘贴错误。`).join('；') + '</div>';
+  var totalProgress = 0, totalStopped = 0, totalCompleted = 0, totalEmpty = 0;
+  for (var r = 0; r < records.length; r++) {
+    if (records[r].status === '推进中') totalProgress++;
+    else if (records[r].status === '停止') totalStopped++;
+    else if (records[r].status === '完成新增') totalCompleted++;
+    else totalEmpty++;
   }
 
-  html += '<div class="summary-grid">';
-  html += `<div class="summary-card"><h3>📊 总体概览</h3>
-    <div class="summary-stat"><span>统计周数</span><span class="val">${weeks.length}</span></div>
-    <div class="summary-stat"><span>覆盖银行</span><span class="val">${allBanks.length}</span></div>
-    <div class="summary-stat"><span>周间对比次数</span><span class="val">${totalComparisons}</span></div>
-    <div class="summary-stat"><span>重复周次</span><span class="val" style="color:#dc3545">${duplicates.length}</span></div></div>`;
-  html += `<div class="summary-card"><h3>📈 变化分布</h3>
-    <div class="summary-stat"><span>🟢 实质进展</span><span class="val">${totalProgress} 次</span></div>
-    <div class="summary-stat"><span>🟡 微调</span><span class="val">${totalMinor} 次</span></div>
-    <div class="summary-stat"><span>🔴 停滞</span><span class="val">${totalStalled} 次</span></div>
-    <div class="progress-bar"><div class="progress-bar-fill good" style="width:${totalComparisons>0?totalProgress/totalComparisons*100:0}%"></div></div></div>`;
+  var html = '<div class="summary-grid">';
+  html += '<div class="summary-card"><h3>总体概览</h3>' +
+    '<div class="summary-stat"><span>统计周数</span><span class="val">' + weeks.length + '</span></div>' +
+    '<div class="summary-stat"><span>覆盖银行</span><span class="val">' + banks.length + '</span></div>' +
+    '<div class="summary-stat"><span>总记录数</span><span class="val">' + records.length + '</span></div>' +
+    '<div class="summary-stat"><span>待补充</span><span class="val" style="color:#f59e0b">' + totalEmpty + '</span></div></div>';
+
+  html += '<div class="summary-card"><h3>状态分布</h3>' +
+    '<div class="summary-stat"><span>推进中</span><span class="val" style="color:#1e40af">' + totalProgress + '</span></div>' +
+    '<div class="summary-stat"><span>停止</span><span class="val" style="color:#991b1b">' + totalStopped + '</span></div>' +
+    '<div class="summary-stat"><span>完成新增</span><span class="val" style="color:#166534">' + totalCompleted + '</span></div></div>';
   html += '</div>';
 
   html += '<h3 style="margin-bottom:10px;font-size:0.93rem;">各银行进展评分</h3><div class="summary-grid">';
-  for (const bs of bankStats) {
-    let barClass = 'bad';
-    if (bs.score >= 50) barClass = 'good'; else if (bs.score >= 25) barClass = 'warn';
-    html += `<div class="summary-card"><h3>${bs.bank}</h3>
-      <div class="summary-stat"><span>进展</span><span class="val" style="color:#28a745">${bs.progress}</span></div>
-      <div class="summary-stat"><span>微调</span><span class="val" style="color:#ffc107">${bs.minor}</span></div>
-      <div class="summary-stat"><span>停滞</span><span class="val" style="color:#dc3545">${bs.stalled}</span></div>
-      <div class="progress-bar"><div class="progress-bar-fill ${barClass}" style="width:${bs.score}%"></div></div>
-      <div style="font-size:0.73rem;color:var(--text-secondary);margin-top:4px;">进展率 ${bs.score}%</div></div>`;
+  for (var s = 0; s < bankStats.length; s++) {
+    var bs = bankStats[s];
+    var barColor = bs.score >= 50 ? '#28a745' : (bs.score >= 25 ? '#ffc107' : '#dc3545');
+    html += '<div class="summary-card"><h3>' + bs.bank + '</h3>' +
+      '<div class="summary-stat"><span>推进中</span><span class="val" style="color:#1e40af">' + bs.progress + '</span></div>' +
+      '<div class="summary-stat"><span>停止</span><span class="val" style="color:#991b1b">' + bs.stopped + '</span></div>' +
+      '<div class="summary-stat"><span>完成新增</span><span class="val" style="color:#166534">' + bs.completed + '</span></div>' +
+      '<div style="height:7px;border-radius:3px;background:#e9ecef;margin:6px 0;overflow:hidden;"><div style="height:100%;border-radius:3px;background:' + barColor + ';width:' + bs.score + '%"></div></div>' +
+      '<div style="font-size:0.73rem;color:var(--text-secondary);margin-top:4px;">活跃率 ' + bs.score + '%</div></div>';
   }
   html += '</div>';
   return html;
+}
+
+// ====== MODAL ======
+function openModal(title, bodyHTML) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHTML;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(event) {
+  if (event && event.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').classList.remove('open');
 }
 
 // ====== UI HELPERS ======
 function switchTab(tabName) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  const tabMap = { table: 0, card: 1, diff: 2, summary: 3 };
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  var tabMap = { table: 0, card: 1, diff: 2, summary: 3 };
   document.querySelectorAll('.tab')[tabMap[tabName]||0].classList.add('active');
-  document.getElementById(`view-${tabName}`).classList.add('active');
+  document.getElementById('view-' + tabName).classList.add('active');
 }
 
-function toggleInput() {
-  document.getElementById('inputToggle').classList.toggle('open');
-  document.getElementById('inputBody').classList.toggle('open');
+// ====== FONT SIZE ======
+var fontScale = 1;
+var fontLabels = ['小号', '标准', '大号', '特大', '超大'];
+function changeFont(delta) {
+  fontScale = Math.max(0.75, Math.min(1.5, fontScale + delta * 0.125));
+  document.documentElement.style.setProperty('--font-scale', fontScale);
+  var idx = Math.round((fontScale - 0.75) / 0.25);
+  document.getElementById('fontLabel').textContent = fontLabels[Math.max(0, Math.min(4, idx))];
+  localStorage.setItem('credit_progress_font_scale', fontScale);
 }
-
-// ====== MAIN ======
-function parseAndRender() {
-  const rawText = document.getElementById('rawInput').value;
-  if (!rawText.trim()) { alert('请先粘贴原始周报文字'); return; }
-  reportData = parseReports(rawText);
-  if (!reportData || reportData.weeks.length === 0) {
-    alert('未能解析出有效数据，请检查格式。\n\n期望格式：\n1、2026.4.30授信进展如下：\n中信：...\n浦发：...');
-    return;
+(function() {
+  var saved = localStorage.getItem('credit_progress_font_scale');
+  if (saved) {
+    fontScale = parseFloat(saved);
+    document.documentElement.style.setProperty('--font-scale', fontScale);
+    var idx = Math.round((fontScale - 0.75) / 0.25);
+    document.getElementById('fontLabel').textContent = fontLabels[Math.max(0, Math.min(4, idx))];
   }
-  try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
-  renderAll();
-}
-
-function renderAll() {
-  if (!reportData) return;
-  document.getElementById('view-table').innerHTML = renderTableView(reportData);
-  document.getElementById('view-card').innerHTML = renderCardView(reportData);
-  document.getElementById('view-diff').innerHTML = renderDiffView(reportData);
-  document.getElementById('view-summary').innerHTML = renderSummaryView(reportData);
-  const warningsEl = document.getElementById('warnings');
-  if (reportData.duplicates.length > 0) {
-    warningsEl.style.display = 'block';
-    warningsEl.innerHTML = '<strong>⚠️ 检测到重复周次：</strong>' +
-      reportData.duplicates.map(idx => `第${reportData.weeks[idx].id}条（${reportData.weeks[idx].date}）与上一条完全一致，可能是复制粘贴错误。`).join('；');
-  } else { warningsEl.style.display = 'none'; }
-}
-
-function loadDemo() {
-  const demo = `1、2026.4.30授信进展如下：
-中信：3月初已还本5000万，剩余1000万6月初到期，等节后两周内新风险总监（原风险领导对行业持退出意见）到位后，王惠再次沟通续贷方案，金额未定；我方预估会整体退出，备选用浙商沟通增额覆盖。
-
-浦发：3月底已还本1.5亿结清余额，因分行一把手有松口迹象，需要等吕行节后两周内约上分行对公副行长再次沟通应收账款质押可行性，方案为表面敞口1.2亿，实际敞口3000万；我方预估6月落地。
-
-建行：审批员对行业合规无意见，等节后2周内约上分行对公副行长后（审批会签审人，目前不在深圳，秘书不确定第一周能否返深），再次上会（集团额度+两个主体信用额度+固贷+流贷），上会后一周内出批复；我方预估最迟5.18-22能确定。
-
-兴业：已同步建行时间线，预计建行批复后两周内出批复。
-
-浙商：3000万敞口8月到期，已确定新续最低5000万起，争取沟通涵盖中信缺口。
-
-2、2026.5.9授信进展如下：
-中信：3月初已还本5000万，剩余1000万6月初到期，新风险总监已到位，昨天王惠已再次向信审汇报续贷方案，但还需信审内部讨论+咨询百信余额（余额持续下降，当前43亿）；我方预估会整体退出，备选用浙商沟通增额覆盖。
-
-浦发：3月底已还本1.5亿结清余额，节后吕行已跟对公副行长沟通，同意继续报批，现等客户经理邓林两周内更新年报数据后重新上会，预计5.25-29可以排上会，方案为应收账款质押做增信措施，表面敞口1.2亿，实际敞口3000万；我方预估6月落地。
-
-建行：下周二（5.12）上会（集团额度+两个主体信用额度+固贷+流贷），上会后一周内出批复+分行一把手签字；我方预估最迟5.18-22能确定。
-
-浙商：已确认待3000万银票8月到期后增至5000万国内证（分期乐网络做主体，开证给软件4000万+1个小主体1000万，需等税务8月确认关联交易情况）；目前现已经开始续贷数据整理提供，争取沟通增额到8000万覆盖中信缺口
-
-兴业：暂无进展
-
-3、2026.5.15授信进展如下：
-中信：3月初已还本5000万，剩余1000万6月初到期，目前信审还在看材料，预计月底反馈；我方预估会整体退出，备选用浙商沟通增额覆盖。
-
-浦发：3月底已还本1.5亿结清余额，现等客户经理邓林还在更新年报数据后重新上会，预计5.25-29可以排上会，方案为应收账款质押做增信措施，表面敞口1.2亿，实际敞口3000万；我方预估6月落地。
-
-建行：阎行已党校培训返深，下周二（5.19）上会（集团额度+两个主体信用额度+固贷+流贷），上会后一周内出批复+分行一把手签字+法审签约；争取月底前先将流贷提款，若周二批复确定，将开始开户流程，避免耽误提款。
-
-浙商：已确认待3000万银票8月到期后增至5000万国内证（分期乐网络做主体，开证给软件4000万+1个小主体1000万，需等税务8月确认关联交易情况）；目前现已经开始续贷数据整理提供，争取沟通增额到8000万覆盖中信缺口
-
-兴业：暂无进展`;
-  document.getElementById('rawInput').value = demo;
-  parseAndRender();
-}
-
-function clearAll() {
-  if (confirm('确定清空所有数据？')) {
-    document.getElementById('rawInput').value = '';
-    reportData = null;
-    ['view-table','view-card','view-diff','view-summary'].forEach(id => document.getElementById(id).innerHTML = '');
-    document.getElementById('warnings').style.display = 'none';
-    try { localStorage.removeItem('credit_progress_input'); } catch(e) {}
-  }
-}
+})();
 
 // ====== INIT ======
 function init() {
@@ -1099,17 +1406,13 @@ function init() {
     if (e.key === 'Enter' && document.activeElement === document.getElementById('passwordInput')) {
       doLogin();
     }
-    if (e.ctrlKey && e.key === 'Enter' && isLoggedIn) {
-      parseAndRender();
-    }
     if (e.key === 'Escape') closeModal();
   });
-
   document.getElementById('modalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
 
-  tryAutoLogin().then(success => {
+  tryAutoLogin().then(function(success) {
     if (!success) {
       document.getElementById('loginScreen').style.display = 'flex';
     }

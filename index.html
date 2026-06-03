@@ -471,34 +471,36 @@ async function doLogin() {
     return;
   }
 
-  try {
-    // Call RPC to verify password and get data
-    const { data, error } = await sb.rpc('get_report', { pw: password });
+  errorEl.style.display = 'none';
 
-    if (error) {
-      errorEl.textContent = '连接失败: ' + error.message;
+  try {
+    // Read stored password from Supabase for verification
+    const { data: cfgData, error: cfgError } = await sb
+      .from('app_config')
+      .select('value')
+      .eq('key', 'shared_password')
+      .single();
+
+    if (cfgError || !cfgData) {
+      errorEl.textContent = '数据库未初始化，请先在 Supabase 中运行 SQL';
       errorEl.style.display = 'block';
       return;
     }
 
-    // If data is null, password is wrong (or DB not initialized)
-    if (data === null) {
-      // Check if DB is initialized
-      const { data: cfgData } = await sb
-        .from('app_config').select('value').eq('key', 'shared_password').single();
-
-      if (!cfgData) {
-        errorEl.textContent = '数据库未初始化，请先在 Supabase 中运行 SQL 建表。';
-        errorEl.style.display = 'block';
-        return;
-      }
-
+    if (password !== cfgData.value) {
       errorEl.textContent = '密码错误';
       errorEl.style.display = 'block';
       return;
     }
 
-    loginSuccess(password, data);
+    // Password verified — load report data
+    const { data: reportData } = await sb
+      .from('app_data')
+      .select('value')
+      .eq('key', 'report_data')
+      .single();
+
+    loginSuccess(password, reportData ? reportData.value : '');
   } catch (e) {
     console.error('Login error:', e);
     errorEl.textContent = '连接失败，请检查网络后重试';
@@ -510,11 +512,8 @@ function loginSuccess(password, reportText) {
   isLoggedIn = true;
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainContent').classList.add('visible');
-
-  // Save password hash for auto-login
   localStorage.setItem('credit_progress_pw', password);
 
-  // Load report data from RPC response
   if (reportText) {
     document.getElementById('rawInput').value = reportText;
     reportData = parseReports(reportText);
@@ -530,12 +529,26 @@ async function tryAutoLogin() {
   if (!savedPw) return false;
 
   try {
-    const { data, error } = await sb.rpc('get_report', { pw: savedPw });
+    // Verify password still works
+    const { data: cfgData, error: cfgError } = await sb
+      .from('app_config')
+      .select('value')
+      .eq('key', 'shared_password')
+      .single();
 
-    if (!error && data !== null) {
-      loginSuccess(savedPw, data);
-      return true;
+    if (cfgError || !cfgData || savedPw !== cfgData.value) {
+      localStorage.removeItem('credit_progress_pw');
+      return false;
     }
+
+    const { data: reportData } = await sb
+      .from('app_data')
+      .select('value')
+      .eq('key', 'report_data')
+      .single();
+
+    loginSuccess(savedPw, reportData ? reportData.value : '');
+    return true;
   } catch (e) {
     console.log('Auto-login failed:', e.message);
   }
@@ -544,7 +557,7 @@ async function tryAutoLogin() {
 
 // ====== CLOUD DATA ======
 function loadFromCloud() {
-  // Data already loaded during login via RPC
+  // Data already loaded during login
 }
 
 async function saveToCloud() {
@@ -573,12 +586,12 @@ async function saveToCloud() {
 
     if (error) throw error;
     if (data === false) {
-      saveStatus.textContent = '✗ 密码验证失败，请刷新页面重新登录';
+      saveStatus.textContent = '✗ 密码验证失败';
       saveStatus.className = 'save-status error';
     } else {
       saveStatus.textContent = '✓ 已保存到云端';
       saveStatus.className = 'save-status success';
-      try { localStorage.setItem('credit_progress_input', rawText); } catch (e) { /* ignore */ }
+      try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
       setTimeout(() => { saveStatus.textContent = ''; }, 3000);
     }
   } catch (e) {

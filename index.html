@@ -62,14 +62,24 @@ body {
 .login-box h1 { font-size: 1.3rem; margin-bottom: 6px; color: #1a3a5c; }
 .login-box .login-sub { font-size: 0.85rem; color: #6b7c93; margin-bottom: 24px; }
 .login-box label { display: block; text-align: left; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-.login-box input[type="password"] {
-  width: 100%; padding: 12px 14px; border: 1.5px solid #e2e6ed; border-radius: 8px;
-  font-size: 1rem; font-family: var(--font); margin-bottom: 16px;
+.pw-wrap { position: relative; margin-bottom: 16px; }
+.pw-wrap input {
+  width: 100%; padding: 12px 44px 12px 14px; border: 1.5px solid #e2e6ed; border-radius: 8px;
+  font-size: 1rem; font-family: var(--font);
 }
-.login-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,109,240,0.12); }
+.pw-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,109,240,0.12); }
+.pw-eye {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 1.1rem;
+  color: #999; padding: 4px; line-height: 1;
+}
+.pw-eye:hover { color: #555; }
 .login-box .btn { width: 100%; padding: 12px; font-size: 1rem; }
 .login-box .login-error { color: #dc3545; font-size: 0.82rem; margin-top: 10px; display: none; }
 .login-box .login-hint { font-size: 0.75rem; color: #999; margin-top: 16px; }
+
+.main-content { display: none; }
+.main-content.visible { display: block; }
 
 /* ===== Header ===== */
 .header {
@@ -93,9 +103,6 @@ body {
 }
 .font-btn:hover { background: rgba(255,255,255,0.25); }
 .font-label { font-size: 0.75rem; opacity: 0.8; min-width: 36px; text-align: center; }
-
-.main-content { display: none; }
-.main-content.visible { display: block; }
 
 .container { max-width: 1400px; margin: 0 auto; padding: 12px; }
 
@@ -161,7 +168,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .legend-item { display: flex; align-items: center; gap: 4px; }
 .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
-/* ===== Table View ===== */
+/* ===== Views ===== */
 .view { display: none; }
 .view.active { display: block; }
 
@@ -169,9 +176,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   overflow-x: auto; background: var(--card-bg); border-radius: var(--radius);
   box-shadow: var(--shadow); -webkit-overflow-scrolling: touch;
 }
-.table-wrap table {
-  width: 100%; border-collapse: collapse; min-width: 800px;
-}
+.table-wrap table { width: 100%; border-collapse: collapse; min-width: 800px; }
 .table-wrap th, .table-wrap td {
   padding: 8px 12px; border: 1px solid var(--border); vertical-align: top;
   font-size: 0.8rem; line-height: 1.55;
@@ -186,7 +191,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   font-weight: 700; text-align: center; background: #f8f9fb;
   position: sticky; left: 0; z-index: 1; font-size: 0.83rem;
 }
-.cell-content { position: relative; }
 .cell-badge {
   display: inline-block; padding: 2px 7px; border-radius: 10px;
   font-size: 0.68rem; font-weight: 700; margin-bottom: 4px;
@@ -337,11 +341,9 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   .input-actions { gap: 6px; }
   .btn { padding: 8px 12px; font-size: 0.8rem; }
   .login-box { padding: 28px 20px; }
-  /* Larger tap targets on mobile */
   .cell-expand, .tab, .btn { min-height: 40px; display: inline-flex; align-items: center; }
   .font-btn { width: 36px; height: 36px; }
 }
-
 @media (max-width: 480px) {
   .summary-grid { grid-template-columns: 1fr; }
   .legend { gap: 6px; font-size: 0.68rem; }
@@ -356,7 +358,10 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
     <h1>🔒 授信进展周报</h1>
     <p class="login-sub">请输入共享密码查看</p>
     <label for="passwordInput">密码</label>
-    <input type="password" id="passwordInput" placeholder="输入共享密码" autofocus>
+    <div class="pw-wrap">
+      <input type="password" id="passwordInput" placeholder="输入共享密码" autofocus>
+      <button class="pw-eye" id="pwEye" onclick="togglePw()" title="显示密码">👁</button>
+    </div>
     <button class="btn btn-primary" onclick="doLogin()">确认</button>
     <p class="login-error" id="loginError"></p>
     <p class="login-hint">首次使用？联系管理员获取密码。<br>浏览器会记住登录状态，下次自动进入。</p>
@@ -381,7 +386,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 </div>
 
 <div class="container">
-  <!-- Input Section -->
   <div class="input-section">
     <div class="input-toggle open" id="inputToggle" onclick="toggleInput()">
       <span class="arrow">▶</span> 数据输入区（粘贴原始周报文字）
@@ -406,7 +410,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
     </div>
   </div>
 
-  <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('table')">📊 表格视图</button>
     <button class="tab" onclick="switchTab('card')">🃏 卡片视图</button>
@@ -414,7 +417,6 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
     <button class="tab" onclick="switchTab('summary')">📈 总结仪表盘</button>
   </div>
 
-  <!-- Legend -->
   <div class="legend">
     <div class="legend-item"><span class="legend-dot" style="background:#28a745"></span> 进展</div>
     <div class="legend-item"><span class="legend-dot" style="background:#ffc107"></span> 微调</div>
@@ -423,10 +425,8 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
     <span style="color:var(--text-secondary);font-size:0.7rem;">删除线=删除 &nbsp; 绿色=新增</span>
   </div>
 
-  <!-- Warnings -->
   <div class="warnings" id="warnings" style="display:none"></div>
 
-  <!-- Views -->
   <div class="view active" id="view-table"></div>
   <div class="view" id="view-card"></div>
   <div class="view" id="view-diff"></div>
@@ -435,9 +435,8 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 
 <div class="footer">授信进展周报对比工具 · 数据存储于云端 · 需密码访问</div>
 
-</div><!-- /main-content -->
+</div>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-header">
@@ -448,17 +447,49 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ====== SUPABASE CONFIG ======
+// ====== SUPABASE API (pure fetch, no CDN) ======
 const SUPABASE_URL = 'https://xewouklagifgvbeqizoq.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhld291a2xhZ2lmd3ZiZXFpem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTM0NTcsImV4cCI6MjA5NjAyOTQ1N30.Wkf69uw5-K33Qhh_urgyZQ3SRZiRS_w8l9rfVW4--kk';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function sbGet(table, query) {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) params.set(k, v);
+  const url = `${SUPABASE_URL}/rest/v1/${table}?${params.toString()}`;
+  const res = await fetch(url, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`GET ${table}: ${res.status} ${t}`); }
+  return res.json();
+}
+
+async function sbRpc(fnName, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(`RPC ${fnName}: ${res.status} ${t}`); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
 
 // ====== GLOBAL STATE ======
 let reportData = null;
 let isLoggedIn = false;
+
+// ====== PASSWORD TOGGLE ======
+function togglePw() {
+  const inp = document.getElementById('passwordInput');
+  const eye = document.getElementById('pwEye');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    eye.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    eye.textContent = '👁';
+  }
+}
 
 // ====== AUTH ======
 async function doLogin() {
@@ -474,15 +505,12 @@ async function doLogin() {
   errorEl.style.display = 'none';
 
   try {
-    // Read stored password from Supabase for verification
-    const { data: cfgData, error: cfgError } = await sb
-      .from('app_config')
-      .select('value')
-      .eq('key', 'shared_password')
-      .single();
+    // Step 1: read stored password from app_config
+    const configRows = await sbGet('app_config', { key: 'eq.shared_password', select: 'value', limit: '1' });
+    const cfgData = configRows && configRows.length > 0 ? configRows[0] : null;
 
-    if (cfgError || !cfgData) {
-      errorEl.textContent = '数据库未初始化，请先在 Supabase 中运行 SQL';
+    if (!cfgData) {
+      errorEl.textContent = '数据库未初始化，请先在 Supabase 运行 SQL';
       errorEl.style.display = 'block';
       return;
     }
@@ -493,17 +521,20 @@ async function doLogin() {
       return;
     }
 
-    // Password verified — load report data
-    const { data: reportData } = await sb
-      .from('app_data')
-      .select('value')
-      .eq('key', 'report_data')
-      .single();
+    // Step 2: load report data from app_data
+    let reportText = '';
+    try {
+      const dataRows = await sbGet('app_data', { key: 'eq.report_data', select: 'value', limit: '1' });
+      const rData = dataRows && dataRows.length > 0 ? dataRows[0] : null;
+      if (rData) reportText = rData.value;
+    } catch (e) {
+      console.log('No report data yet:', e.message);
+    }
 
-    loginSuccess(password, reportData ? reportData.value : '');
+    loginSuccess(password, reportText);
   } catch (e) {
     console.error('Login error:', e);
-    errorEl.textContent = '连接失败，请检查网络后重试';
+    errorEl.textContent = '连接失败: ' + e.message;
     errorEl.style.display = 'block';
   }
 }
@@ -517,9 +548,7 @@ function loginSuccess(password, reportText) {
   if (reportText) {
     document.getElementById('rawInput').value = reportText;
     reportData = parseReports(reportText);
-    if (reportData && reportData.weeks.length > 0) {
-      renderAll();
-    }
+    if (reportData && reportData.weeks.length > 0) renderAll();
   }
   document.getElementById('saveBtn').disabled = false;
 }
@@ -529,25 +558,22 @@ async function tryAutoLogin() {
   if (!savedPw) return false;
 
   try {
-    // Verify password still works
-    const { data: cfgData, error: cfgError } = await sb
-      .from('app_config')
-      .select('value')
-      .eq('key', 'shared_password')
-      .single();
+    const configRows = await sbGet('app_config', { key: 'eq.shared_password', select: 'value', limit: '1' });
+    const cfgData = configRows && configRows.length > 0 ? configRows[0] : null;
 
-    if (cfgError || !cfgData || savedPw !== cfgData.value) {
+    if (!cfgData || savedPw !== cfgData.value) {
       localStorage.removeItem('credit_progress_pw');
       return false;
     }
 
-    const { data: reportData } = await sb
-      .from('app_data')
-      .select('value')
-      .eq('key', 'report_data')
-      .single();
+    let reportText = '';
+    try {
+      const dataRows = await sbGet('app_data', { key: 'eq.report_data', select: 'value', limit: '1' });
+      const rData = dataRows && dataRows.length > 0 ? dataRows[0] : null;
+      if (rData) reportText = rData.value;
+    } catch (e) { /* no data yet */ }
 
-    loginSuccess(savedPw, reportData ? reportData.value : '');
+    loginSuccess(savedPw, reportText);
     return true;
   } catch (e) {
     console.log('Auto-login failed:', e.message);
@@ -555,26 +581,17 @@ async function tryAutoLogin() {
   return false;
 }
 
-// ====== CLOUD DATA ======
-function loadFromCloud() {
-  // Data already loaded during login
-}
-
+// ====== SAVE TO CLOUD ======
 async function saveToCloud() {
   const rawText = document.getElementById('rawInput').value;
-  if (!rawText.trim()) {
-    alert('没有数据可保存');
-    return;
-  }
+  if (!rawText.trim()) { alert('没有数据可保存'); return; }
 
   const saveBtn = document.getElementById('saveBtn');
   const saveStatus = document.getElementById('saveStatus');
   const password = localStorage.getItem('credit_progress_pw');
 
   if (!password) {
-    saveStatus.textContent = '✗ 未登录';
-    saveStatus.className = 'save-status error';
-    return;
+    saveStatus.textContent = '✗ 未登录'; saveStatus.className = 'save-status error'; return;
   }
 
   saveBtn.disabled = true;
@@ -582,17 +599,15 @@ async function saveToCloud() {
   saveStatus.className = 'save-status';
 
   try {
-    const { data, error } = await sb.rpc('save_report', { pw: password, data_value: rawText });
-
-    if (error) throw error;
-    if (data === false) {
-      saveStatus.textContent = '✗ 密码验证失败';
-      saveStatus.className = 'save-status error';
-    } else {
+    const result = await sbRpc('save_report', { pw: password, data_value: rawText });
+    if (result === true || result === 'true') {
       saveStatus.textContent = '✓ 已保存到云端';
       saveStatus.className = 'save-status success';
       try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
       setTimeout(() => { saveStatus.textContent = ''; }, 3000);
+    } else {
+      saveStatus.textContent = '✗ 密码验证失败';
+      saveStatus.className = 'save-status error';
     }
   } catch (e) {
     saveStatus.textContent = '✗ 保存失败: ' + e.message;
@@ -615,7 +630,6 @@ function changeFont(delta) {
   localStorage.setItem('credit_progress_font_scale', fontScale);
 }
 
-// Restore font size
 (function() {
   const saved = localStorage.getItem('credit_progress_font_scale');
   if (saved) {
@@ -673,9 +687,7 @@ function parseReports(rawText) {
       if (!banks[bankName]) banks[bankName] = content;
     }
 
-    if (Object.keys(banks).length > 0) {
-      weeks.push({ id, date, banks });
-    }
+    if (Object.keys(banks).length > 0) weeks.push({ id, date, banks });
   }
 
   const duplicates = [];
@@ -688,9 +700,7 @@ function parseReports(rawText) {
       if (prevBanks === currBanks) {
         let identical = true;
         for (const b of Object.keys(prev.banks)) {
-          if ((prev.banks[b] || '').trim() !== (curr.banks[b] || '').trim()) {
-            identical = false; break;
-          }
+          if ((prev.banks[b] || '').trim() !== (curr.banks[b] || '').trim()) { identical = false; break; }
         }
         if (identical) duplicates.push(i);
       }
@@ -722,9 +732,7 @@ function tokenize(text) {
 
 // ====== MYERS DIFF ======
 function myersDiff(oldTokens, newTokens) {
-  const n = oldTokens.length;
-  const m = newTokens.length;
-  const max = n + m;
+  const n = oldTokens.length, m = newTokens.length, max = n + m;
   const v = new Array(2 * max + 1);
   const trace = [];
   v[max + 1] = 0;
@@ -782,8 +790,7 @@ function classifyChange(oldText, newText) {
   if (oldText && !newText) return 'removed';
   if (oldText.trim() === newText.trim()) return 'stalled';
 
-  const oldTokens = tokenize(oldText);
-  const newTokens = tokenize(newText);
+  const oldTokens = tokenize(oldText), newTokens = tokenize(newText);
   const totalTokens = Math.max(oldTokens.length, newTokens.length, 1);
   const diff = myersDiff(oldTokens, newTokens);
   let changedTokens = 0;
@@ -806,8 +813,7 @@ function renderDiffHTML(oldText, newText) {
   if (!oldText && !newText) return '';
   if (!oldText) return `<span class="diff-add">${escapeHTML(newText)}</span>`;
   if (!newText) return `<span class="diff-del">${escapeHTML(oldText)}</span>`;
-  const oldTokens = tokenize(oldText);
-  const newTokens = tokenize(newText);
+  const oldTokens = tokenize(oldText), newTokens = tokenize(newText);
   const diff = myersDiff(oldTokens, newTokens);
   let html = '';
   for (const chunk of diff) {
@@ -830,7 +836,6 @@ function openModal(title, bodyHTML) {
   document.getElementById('modalBody').innerHTML = bodyHTML;
   document.getElementById('modalOverlay').classList.add('open');
 }
-
 function closeModal(event) {
   if (event && event.target !== document.getElementById('modalOverlay')) return;
   document.getElementById('modalOverlay').classList.remove('open');
@@ -841,24 +846,17 @@ function renderTableView(data) {
   const { weeks, duplicates } = data;
   const allBanks = [];
   const seen = new Set();
-  for (const w of weeks) {
-    for (const b of Object.keys(w.banks)) {
-      if (!seen.has(b)) { seen.add(b); allBanks.push(b); }
-    }
-  }
+  for (const w of weeks) { for (const b of Object.keys(w.banks)) { if (!seen.has(b)) { seen.add(b); allBanks.push(b); } } }
   allBanks.sort();
 
-  let html = '<div class="table-wrap"><table><thead><tr>';
-  html += '<th class="bank-col">银行</th>';
+  let html = '<div class="table-wrap"><table><thead><tr><th class="bank-col">银行</th>';
   for (let i = 0; i < weeks.length; i++) {
-    const dupLabel = duplicates.includes(i) ? ' ⚠️' : '';
-    html += `<th class="week-col">${weeks[i].date}${dupLabel}</th>`;
+    html += `<th class="week-col">${weeks[i].date}${duplicates.includes(i) ? ' ⚠️' : ''}</th>`;
   }
   html += '</tr></thead><tbody>';
 
   for (const bank of allBanks) {
-    html += '<tr>';
-    html += `<td class="bank-name">${bank}</td>`;
+    html += `<tr><td class="bank-name">${bank}</td>`;
     for (let i = 0; i < weeks.length; i++) {
       const currentText = weeks[i].banks[bank] || '';
       const prevText = i > 0 ? (weeks[i - 1].banks[bank] || '') : '';
@@ -872,14 +870,12 @@ function renderTableView(data) {
       else if (changeType !== 'empty') html += getBadgeHTML(changeType);
 
       if (currentText) {
-        const textId = `text-${bank.replace(/[^a-zA-Z一-龥]/g,'')}-${i}`;
+        const textId = `t-${bank.replace(/[^a-zA-Z一-鿿]/g,'')}-${i}`;
         const isLong = currentText.length > 100;
         html += `<div class="cell-text ${isLong ? 'collapsed' : ''}" id="${textId}">${escapeHTML(currentText)}</div>`;
-        if (isLong) html += `<span class="cell-expand" onclick="expandCell('${textId}', this)">展开全文 ▼</span>`;
+        if (isLong) html += `<span class="cell-expand" onclick="expandCell('${textId}',this)">展开全文 ▼</span>`;
         if (i > 0 && prevText && changeType !== 'stalled') {
-          const eOld = escapeHTML(prevText).replace(/'/g, "\\'").replace(/\\/g, '\\\\');
-          const eNew = escapeHTML(currentText).replace(/'/g, "\\'").replace(/\\/g, '\\\\');
-          html += `<span class="cell-expand" onclick="showDiffModal('${bank}', '${weeks[i-1].date}', '${weeks[i].date}', '${eOld}', '${eNew}')">对比上周 →</span>`;
+          html += `<span class="cell-expand" onclick="showDiffModal('${bank}','${weeks[i-1].date}','${weeks[i].date}',\`${escapeHTML(prevText).replace(/`/g,'\\`')}\`,\`${escapeHTML(currentText).replace(/`/g,'\\`')}\`)">对比上周 →</span>`;
         }
       } else {
         html += '<span style="color:#999;font-size:0.78rem;">—</span>';
@@ -898,10 +894,7 @@ function expandCell(textId, el) {
 }
 
 function showDiffModal(bank, oldDate, newDate, oldText, newText) {
-  const txt = document.createElement('textarea');
-  txt.innerHTML = oldText; const oldDecoded = txt.value;
-  txt.innerHTML = newText; const newDecoded = txt.value;
-  const diffHTML = renderDiffHTML(oldDecoded, newDecoded);
+  const diffHTML = renderDiffHTML(oldText, newText);
   openModal(`${bank} · ${oldDate} → ${newDate}`, `
     <h4>变化对比</h4>
     <div class="diff-text">${diffHTML}</div>
@@ -931,13 +924,12 @@ function renderCardView(data) {
       let cssClass = changeType;
       if (isDup) cssClass = 'stalled';
 
-      html += `<div class="card-week ${cssClass}">`;
-      html += `<div class="card-week-date">${weeks[i].date}`;
+      html += `<div class="card-week ${cssClass}"><div class="card-week-date">${weeks[i].date}`;
       if (isDup) html += '<span class="badge" style="background:#fce4e4;color:#a71d2a;">⚠️重复</span>';
       else if (changeType === 'progress') html += '<span class="badge" style="background:#d4edda;color:#155724;">进展</span>';
       else if (changeType === 'minor') html += '<span class="badge" style="background:#fff3cd;color:#856404;">微调</span>';
       else if (changeType === 'stalled') html += '<span class="badge" style="background:#fce4e4;color:#a71d2a;">停滞</span>';
-      else if (changeType === 'new') html += '<span class="badge" style="background:#d1ecf1;color:#0c5460;">首周</span>';
+      else html += '<span class="badge" style="background:#d1ecf1;color:#0c5460;">首周</span>';
       html += '</div>';
       html += currentText ? `<div class="card-week-text">${escapeHTML(currentText)}</div>` : '<div class="card-week-text" style="color:#999;">—</div>';
       html += '</div>';
@@ -963,8 +955,7 @@ function renderDiffView(data) {
       const newText = weeks[i].banks[bank] || '';
       const changeType = classifyChange(oldText, newText);
       if (changeType === 'empty') continue;
-      const oldTokens = tokenize(oldText), newTokens = tokenize(newText);
-      const diff = myersDiff(oldTokens, newTokens);
+      const diff = myersDiff(tokenize(oldText), tokenize(newText));
       let changedCount = 0;
       for (const chunk of diff) { if (chunk.type !== 'equal') changedCount += chunk.tokens.length; }
       changes.push({ bank, oldDate: weeks[i-1].date, newDate: weeks[i].date, changeType, changedCount, oldText, newText, diff, isDup: duplicates.includes(i) });
@@ -978,14 +969,12 @@ function renderDiffView(data) {
     return b.changedCount - a.changedCount;
   });
 
-  if (changes.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);">暂无足够数据对比（至少需要两周数据）</div>';
+  if (changes.length === 0) return '<div style="text-align:center;padding:40px;color:var(--text-secondary);">暂无足够数据对比</div>';
 
   let html = '<div class="diff-list">';
   for (const c of changes) {
-    html += `<div class="diff-item ${c.changeType}">`;
-    html += `<div class="diff-item-header"><span class="diff-item-bank">${c.bank}</span><span class="diff-item-weeks">${c.oldDate} → ${c.newDate}</span>${getBadgeHTML(c.changeType)}${c.isDup ? '<span class="cell-badge dup">⚠️重复</span>' : ''}</div>`;
-    html += `<div class="diff-item-body">${c.isDup ? '<strong>⚠️ 此周数据与上周完全一致，可能为复制粘贴错误。</strong>' : renderDiffHTML(c.oldText, c.newText)}</div>`;
-    html += '</div>';
+    html += `<div class="diff-item ${c.changeType}"><div class="diff-item-header"><span class="diff-item-bank">${c.bank}</span><span class="diff-item-weeks">${c.oldDate} → ${c.newDate}</span>${getBadgeHTML(c.changeType)}${c.isDup ? '<span class="cell-badge dup">⚠️重复</span>' : ''}</div>`;
+    html += `<div class="diff-item-body">${c.isDup ? '<strong>⚠️ 与上周完全一致，可能是复制粘贴错误。</strong>' : renderDiffHTML(c.oldText, c.newText)}</div></div>`;
   }
   html += '</div>';
   return html;
@@ -1048,7 +1037,7 @@ function renderSummaryView(data) {
   return html;
 }
 
-// ====== SWITCH TABS ======
+// ====== UI HELPERS ======
 function switchTab(tabName) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1057,7 +1046,6 @@ function switchTab(tabName) {
   document.getElementById(`view-${tabName}`).classList.add('active');
 }
 
-// ====== INPUT TOGGLE ======
 function toggleInput() {
   document.getElementById('inputToggle').classList.toggle('open');
   document.getElementById('inputBody').classList.toggle('open');
@@ -1072,7 +1060,7 @@ function parseAndRender() {
     alert('未能解析出有效数据，请检查格式。\n\n期望格式：\n1、2026.4.30授信进展如下：\n中信：...\n浦发：...');
     return;
   }
-  try { localStorage.setItem('credit_progress_input', rawText); } catch (e) { /* ignore */ }
+  try { localStorage.setItem('credit_progress_input', rawText); } catch (e) {}
   renderAll();
 }
 
@@ -1083,11 +1071,10 @@ function renderAll() {
   document.getElementById('view-diff').innerHTML = renderDiffView(reportData);
   document.getElementById('view-summary').innerHTML = renderSummaryView(reportData);
   const warningsEl = document.getElementById('warnings');
-  const internalWarnings = reportData.duplicates || [];
-  if (internalWarnings.length > 0) {
+  if (reportData.duplicates.length > 0) {
     warningsEl.style.display = 'block';
     warningsEl.innerHTML = '<strong>⚠️ 检测到重复周次：</strong>' +
-      internalWarnings.map(idx => `第${reportData.weeks[idx].id}条（${reportData.weeks[idx].date}）与上一条完全一致，可能是复制粘贴错误。`).join('；');
+      reportData.duplicates.map(idx => `第${reportData.weeks[idx].id}条（${reportData.weeks[idx].date}）与上一条完全一致，可能是复制粘贴错误。`).join('；');
   } else { warningsEl.style.display = 'none'; }
 }
 
@@ -1154,7 +1141,6 @@ function init() {
     if (e.target === this) closeModal();
   });
 
-  // Try auto-login
   tryAutoLogin().then(success => {
     if (!success) {
       document.getElementById('loginScreen').style.display = 'flex';

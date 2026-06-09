@@ -451,8 +451,9 @@ function parseReports(rawText) {
   if (!rawText.trim()) return null;
 
   let text = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const weekHeaderRegex = /^(\d+)[、，,.\s\\]\s*(\d{4}\.\d{1,2}\.\d{1,2})[^\n]*?(?:进展|授信|周报|汇报)/m;
-  const splitRegex = /\n(?=\d+[、，,.\s\\]\s*\d{4}\.\d{1,2}\.\d{1,2})/;
+  // 序号无所谓，只认日期；\\ 支持反斜杠分隔符
+  const weekHeaderRegex = /^(?:\d+)?[、，,.\s\\]*(\d{4}\.\d{1,2}\.\d{1,2})[^\n]*?(?:进展|授信|周报|汇报)/m;
+  const splitRegex = /\n(?=(?:\d+)?[、，,.\s\\]*\d{4}\.\d{1,2}\.\d{1,2})/;
 
   const sections = text.split(splitRegex).filter(s => s.trim());
   const weeks = [];
@@ -462,13 +463,12 @@ function parseReports(rawText) {
     const headerMatch = section.match(weekHeaderRegex);
     if (!headerMatch) continue;
 
-    const date = headerMatch[2];
-    const id = parseInt(headerMatch[1]);
+    const date = headerMatch[1];
     const banks = {};
     const bodyText = section.substring(headerMatch[0].length).trim();
 
     const bankPattern = BANK_NAMES.map(b => b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    const bankRegex = new RegExp(`(${bankPattern})[：:]\\s*([\\s\\S]*?)(?=\\n(?:${bankPattern})[：:]|\\n\\d+[、，]|$)`, 'g');
+    const bankRegex = new RegExp(`(${bankPattern})[：:]\\s*([\\s\\S]*?)(?=\\n(?:${bankPattern})[：:]|\\n(?:\\d+)?[、，]|$)`, 'g');
 
     let match;
     while ((match = bankRegex.exec(bodyText)) !== null) {
@@ -478,7 +478,7 @@ function parseReports(rawText) {
       banks[bankName] = content;
     }
 
-    const fullBankRegex = new RegExp(`(${Object.keys(BANK_ALIASES).join('|')})[：:]\\s*([\\s\\S]*?)(?=\\n(?:${Object.keys(BANK_ALIASES).join('|')}|${bankPattern})[：:]|\\n\\d+[、，]|$)`, 'g');
+    const fullBankRegex = new RegExp(`(${Object.keys(BANK_ALIASES).join('|')})[：:]\\s*([\\s\\S]*?)(?=\\n(?:${Object.keys(BANK_ALIASES).join('|')}|${bankPattern})[：:]|\\n(?:\\d+)?[、，]|$)`, 'g');
     while ((match = fullBankRegex.exec(bodyText)) !== null) {
       let bankName = BANK_ALIASES[match[1]] || match[1];
       const content = match[2].trim();
@@ -486,8 +486,14 @@ function parseReports(rawText) {
     }
 
     if (Object.keys(banks).length > 0) {
-      weeks.push({ id, date, banks });
+      weeks.push({ date, banks });
     }
+  }
+
+  // 按日期排序，序号自动从1开始，不依赖原文里的数字
+  weeks.sort((a, b) => a.date.localeCompare(b.date));
+  for (let i = 0; i < weeks.length; i++) {
+    weeks[i].id = i + 1;
   }
 
   const duplicates = [];

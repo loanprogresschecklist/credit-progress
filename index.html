@@ -1094,6 +1094,7 @@ function getWeeklyLinkedBanks() {
 
 // ====== RENDER: CALENDAR VIEW ======
 function renderCalendarView() {
+  try {
   const today = new Date(); today.setHours(0,0,0,0);
   const weeklyBanks = getWeeklyLinkedBanks();
   const SHORT_ENTITY = {
@@ -1172,6 +1173,10 @@ function renderCalendarView() {
   }
 
   document.getElementById('view-calendar').innerHTML = html || '<div class="calendar-empty">暂无到期数据</div>';
+  } catch(e) {
+    document.getElementById('view-calendar').innerHTML = '<div class="calendar-empty" style="color:#dc3545;">⚠️ 日历加载出错: ' + (e.message || e) + '</div>';
+    console.error('Calendar render error:', e);
+  }
 }
 
 function renderCalendarItem(item) {

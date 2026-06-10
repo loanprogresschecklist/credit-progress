@@ -1118,14 +1118,13 @@ function renderCalendarView() {
     const linked = weeklyBanks.has(shortName);
     const entityShort = SHORT_ENTITY[loan.e] || loan.e.substring(0, 6);
 
-    const item = {
-      ...loan,
-      shortName,
-      linked,
-      entityShort,
-      daysLeft,
-      matDate,
-    };
+    const item = Object.assign({}, loan, {
+      shortName: shortName,
+      linked: linked,
+      entityShort: entityShort,
+      daysLeft: daysLeft,
+      matDate: matDate,
+    });
     if (loan.bal) totalBalance += loan.bal;
     if (daysLeft < 0) { pastLoans.push(item); }
     else if (daysLeft <= 30) { urgentCount++; }

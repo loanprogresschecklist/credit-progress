@@ -294,6 +294,66 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .modal-body h4 { font-size: 0.83rem; color: var(--text-secondary); margin: 8px 0 4px; }
 .modal-body .diff-text { font-size: 0.8rem; line-height: 1.7; padding: 10px; background: #f8f9fb; border-radius: 6px; }
 
+/* ===== Calendar View ===== */
+.calendar-timeline {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.calendar-month {
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.calendar-month-header {
+  padding: 10px 16px; font-weight: 700; font-size: 0.9rem;
+  background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%);
+  color: #fff; display: flex; align-items: center; justify-content: space-between;
+}
+.calendar-month-header .month-count { font-size: 0.72rem; opacity: 0.8; }
+.calendar-month-body { padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+.calendar-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: 6px; border-left: 4px solid; font-size: 0.78rem;
+  transition: background 0.15s; flex-wrap: wrap;
+}
+.calendar-item:hover { filter: brightness(0.97); }
+.calendar-item.urgent { background: #fef2f2; border-left-color: #dc3545; }
+.calendar-item.soon { background: #fffbeb; border-left-color: #f59e0b; }
+.calendar-item.far { background: #f0fdf4; border-left-color: #16a34a; }
+.calendar-item.past { background: #f9fafb; border-left-color: #999; }
+.calendar-item .ci-date {
+  font-weight: 700; font-size: 0.8rem; min-width: 50px; text-align: center;
+  color: var(--text);
+}
+.calendar-item .ci-bank {
+  font-weight: 700; font-size: 0.82rem; min-width: 70px;
+}
+.calendar-item .ci-entity {
+  font-size: 0.7rem; color: var(--text-secondary); min-width: 80px; max-width: 130px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.calendar-item .ci-amount {
+  font-weight: 700; font-size: 0.82rem; min-width: 80px; text-align: right;
+}
+.calendar-item .ci-days {
+  font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+}
+.calendar-item .ci-days.urgent { background: #dc3545; color: #fff; }
+.calendar-item .ci-days.soon { background: #f59e0b; color: #fff; }
+.calendar-item .ci-days.far { background: #16a34a; color: #fff; }
+.calendar-item .ci-days.past { background: #999; color: #fff; }
+.calendar-item .ci-linked {
+  font-size: 0.65rem; padding: 2px 6px; border-radius: 8px;
+  background: #dbeafe; color: #1e40af; white-space: nowrap;
+}
+.calendar-empty { text-align: center; padding: 20px; color: var(--text-secondary); font-size: 0.8rem; }
+.calendar-summary {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.calendar-summary-item {
+  padding: 8px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+}
+.calendar-summary-item .cs-count { font-size: 1.2rem; }
+
 /* ===== Footer ===== */
 .footer {
   text-align: center; padding: 16px; color: var(--text-secondary); font-size: 0.73rem;
@@ -374,6 +434,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
     <button class="tab" onclick="switchTab('card')">🃏 卡片视图</button>
     <button class="tab" onclick="switchTab('diff')">🔍 差异详情</button>
     <button class="tab" onclick="switchTab('summary')">📈 总结仪表盘</button>
+    <button class="tab" onclick="switchTab('calendar')">📅 到期日历</button>
   </div>
 
   <!-- Legend -->
@@ -393,6 +454,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   <div class="view" id="view-card"></div>
   <div class="view" id="view-diff"></div>
   <div class="view" id="view-summary"></div>
+  <div class="view" id="view-calendar"></div>
 </div>
 
 <div class="footer">授信进展周报对比工具 · 数据保存在浏览器本地</div>
@@ -870,9 +932,11 @@ function renderSummaryView(data) {
 function switchTab(tabName) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  const tabMap = { table: 0, card: 1, diff: 2, summary: 3 };
+  const tabMap = { table: 0, card: 1, diff: 2, summary: 3, calendar: 4 };
   document.querySelectorAll('.tab')[tabMap[tabName]||0].classList.add('active');
   document.getElementById(`view-${tabName}`).classList.add('active');
+  // Render calendar on first visit
+  if (tabName === 'calendar') renderCalendarView();
 }
 
 // ====== INPUT TOGGLE ======
@@ -900,6 +964,8 @@ function renderAll() {
   document.getElementById('view-card').innerHTML = renderCardView(reportData);
   document.getElementById('view-diff').innerHTML = renderDiffView(reportData);
   document.getElementById('view-summary').innerHTML = renderSummaryView(reportData);
+  // Refresh calendar too (updates 周报关联 tags)
+  renderCalendarView();
   const warningsEl = document.getElementById('warnings');
   const internalWarnings = reportData.duplicates || [];
   if (internalWarnings.length > 0) {
@@ -950,10 +1016,187 @@ function clearAll() {
   if (confirm('确定清空所有数据？')) {
     document.getElementById('rawInput').value = '';
     reportData = null;
-    ['view-table','view-card','view-diff','view-summary'].forEach(id => document.getElementById(id).innerHTML = '');
+    ['view-table','view-card','view-diff','view-summary','view-calendar'].forEach(id => document.getElementById(id).innerHTML = '');
     document.getElementById('warnings').style.display = 'none';
     try { localStorage.removeItem('credit_progress_input'); } catch(e) {}
   }
+}
+
+// ====== LOAN MATURITY DATA (from Excel) ======
+const LOAN_DATA = [
+  {s:1,b:"厦门国际银行",e:"深圳乐信软件技术有限公司",bal:25000000,mat:"2026-12-04"},
+  {s:2,b:"厦门国际银行",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2026-11-07"},
+  {s:3,b:"农业银行福田支行",e:"深圳乐信软件技术有限公司",bal:15000000,mat:"2027-03-04"},
+  {s:4,b:"农业银行福田支行",e:"深圳乐信软件技术有限公司",bal:5000000,mat:"2026-07-28"},
+  {s:5,b:"江苏银行深圳福田支行",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2026-07-30"},
+  {s:6,b:"江苏银行深圳福田支行",e:"深圳乐信软件技术有限公司",bal:10000000,mat:"2026-07-30"},
+  {s:7,b:"深圳农村商业银行股份有限公司",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2027-02-09"},
+  {s:8,b:"中国银行景田北支行",e:"深圳乐信软件技术有限公司",bal:30000000,mat:"2026-07-10"},
+  {s:9,b:"广州银行深圳粤海支行",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2026-08-29"},
+  {s:10,b:"宁波银行深圳分行",e:"深圳乐信软件技术有限公司",bal:10000000,mat:"2026-06-24"},
+  {s:11,b:"浦发银行深圳分行",e:"深圳市分期乐网络科技有限公司",bal:null,mat:"2026-03-26"},
+  {s:12,b:"浦发银行深圳分行",e:"深圳市分期乐网络科技有限公司",bal:null,mat:"2026-03-26"},
+  {s:13,b:"浦发银行江西南昌分行",e:"吉安市分期乐网络小额贷款有限公司",bal:50000000,mat:"2026-09-17"},
+  {s:14,b:"徽商银行科技园支行",e:"深圳市分期乐网络科技有限公司",bal:30000000,mat:"2026-09-28"},
+  {s:15,b:"工商银行深圳上步支行",e:"深圳市分期乐网络科技有限公司",bal:50000000,mat:"2026-12-26"},
+  {s:16,b:"中信银行皇岗支行",e:"深圳市分期乐网络科技有限公司",bal:10000000,mat:"2026-06-12"},
+  {s:17,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:10600000,mat:"2026-09-10"},
+  {s:18,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:4400000,mat:"2026-11-06"},
+  {s:19,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:9697349,mat:"2026-09-10"},
+  {s:20,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:5828608,mat:"2026-10-08"},
+  {s:21,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:5140880,mat:"2026-11-03"},
+  {s:22,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:4332809,mat:"2026-11-27"},
+  {s:23,b:"光大深圳深南支行",e:"深圳市分期乐网络科技有限公司",bal:20000000,mat:"2026-09-08"},
+  {s:24,b:"光大深圳深南支行",e:"深圳市分期乐网络科技有限公司",bal:40000000,mat:"2026-07-22"},
+  {s:25,b:"恒丰银行深圳分行营业部",e:"深圳市分期乐网络科技有限公司",bal:40000000,mat:"2026-09-22"},
+  {s:26,b:"广发银行凤凰支行",e:"深圳市分期乐网络科技有限公司",bal:30000000,mat:"2026-08-10"},
+  {s:27,b:"浙商银行罗湖支行",e:"深圳市分期乐网络科技有限公司",bal:30000000,mat:"2026-08-05"},
+  {s:28,b:"恒丰银行深圳分行营业部",e:"深圳分期乐贸易有限公司",bal:10000000,mat:"2026-09-24"},
+  {s:29,b:"工商银行深圳彩田支行",e:"深圳市分期乐网络科技有限公司",bal:402727295,mat:"2032-07-05"},
+  {s:30,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:342494692,mat:"2032-07-05"}
+];
+
+// Bank name mapping: Excel full name → weekly report short name
+const BANK_TO_SHORT = {
+  '农业银行福田支行': '农行', '农业银行': '农行',
+  '江苏银行深圳福田支行': '江苏', '江苏银行': '江苏',
+  '广州银行深圳粤海支行': '广州', '广州银行': '广州',
+  '宁波银行深圳分行': '宁波', '宁波银行': '宁波',
+  '浦发银行深圳分行': '浦发', '浦发银行江西南昌分行': '浦发', '浦发银行': '浦发',
+  '工商银行深圳上步支行': '工行', '工商银行深圳彩田支行': '工行', '工商银行': '工行',
+  '中信银行皇岗支行': '中信', '中信银行': '中信',
+  '中国银行景田北支行': '中行', '中国银行': '中行',
+  '光大深圳深南支行': '光大', '光大银行': '光大',
+  '广发银行凤凰支行': '广发', '广发银行': '广发',
+  '浙商银行罗湖支行': '浙商', '浙商银行': '浙商',
+  '厦门国际银行': '厦门国际', '徽商银行科技园支行': '徽商',
+  '深圳农村商业银行股份有限公司': '深圳农商', '恒丰银行深圳分行营业部': '恒丰',
+};
+
+function getShortName(fullName) {
+  if (BANK_TO_SHORT[fullName]) return BANK_TO_SHORT[fullName];
+  // Try partial match
+  for (const [key, val] of Object.entries(BANK_TO_SHORT)) {
+    if (fullName.includes(key.replace(/银行.*/, '')) || key.includes(fullName)) return val;
+  }
+  return fullName;
+}
+
+// Check if this bank appears in parsed weekly reports
+function getWeeklyLinkedBanks() {
+  if (!reportData || !reportData.weeks) return new Set();
+  const banks = new Set();
+  for (const w of reportData.weeks) {
+    for (const b of Object.keys(w.banks)) { banks.add(b); }
+  }
+  return banks;
+}
+
+// ====== RENDER: CALENDAR VIEW ======
+function renderCalendarView() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weeklyBanks = getWeeklyLinkedBanks();
+  const SHORT_ENTITY = {
+    '深圳乐信软件技术有限公司': '软件',
+    '深圳市分期乐网络科技有限公司': '分期乐网络',
+    '吉安市分期乐网络小额贷款有限公司': '吉安小贷',
+    '深圳分期乐贸易有限公司': '贸易',
+  };
+
+  // Group loans by month
+  const monthGroups = {};
+  const pastLoans = [];
+  let totalBalance = 0, urgentCount = 0, soonCount = 0;
+
+  for (const loan of LOAN_DATA) {
+    if (!loan.mat) continue;
+    const matDate = new Date(loan.mat + 'T00:00:00');
+    const daysLeft = Math.ceil((matDate - today) / (1000 * 60 * 60 * 24));
+    const shortName = getShortName(loan.bank);
+    const linked = weeklyBanks.has(shortName);
+    const entityShort = SHORT_ENTITY[loan.e] || loan.e.substring(0, 6);
+
+    const item = {
+      ...loan,
+      shortName,
+      linked,
+      entityShort,
+      daysLeft,
+      matDate,
+    };
+    if (loan.bal) totalBalance += loan.bal;
+    if (daysLeft < 0) { pastLoans.push(item); }
+    else if (daysLeft <= 30) { urgentCount++; }
+    else if (daysLeft <= 90) { soonCount++; }
+
+    const monthKey = loan.mat.substring(0, 7); // "2026-07"
+    if (!monthGroups[monthKey]) monthGroups[monthKey] = [];
+    monthGroups[monthKey].push(item);
+  }
+
+  // Sort months
+  const sortedMonths = Object.keys(monthGroups).sort();
+
+  // Summary bar
+  let html = '<div class="calendar-summary">';
+  html += `<div class="calendar-summary-item" style="background:#fef2f2;color:#991b1b;"><span>⚠️ 30天内到期</span><span class="cs-count">${urgentCount}</span></div>`;
+  html += `<div class="calendar-summary-item" style="background:#fffbeb;color:#92400e;"><span>📅 90天内到期</span><span class="cs-count">${soonCount}</span></div>`;
+  html += `<div class="calendar-summary-item" style="background:#f0fdf4;color:#166534;"><span>💰 总余额</span><span class="cs-count">${(totalBalance/100000000).toFixed(2)}亿</span></div>`;
+  html += `<div class="calendar-summary-item" style="background:#f0f4ff;color:#3730a3;"><span>🏦 贷款笔数</span><span class="cs-count">${LOAN_DATA.length}</span></div>`;
+  html += '</div>';
+
+  // Past loans
+  if (pastLoans.length > 0) {
+    html += '<div class="calendar-month"><div class="calendar-month-header" style="background:#999;">📅 已过期 <span class="month-count">' + pastLoans.length + '笔</span></div>';
+    html += '<div class="calendar-month-body">';
+    for (const item of pastLoans) {
+      html += renderCalendarItem(item);
+    }
+    html += '</div></div>';
+  }
+
+  // Month groups
+  for (const monthKey of sortedMonths) {
+    const items = monthGroups[monthKey];
+    const monthTotal = items.reduce((sum, it) => sum + (it.bal || 0), 0);
+    const [y, m] = monthKey.split('-');
+    const monthLabel = y + '年' + parseInt(m) + '月';
+
+    html += '<div class="calendar-month">';
+    html += `<div class="calendar-month-header">${monthLabel} <span class="month-count">${items.length}笔 · ${(monthTotal/10000).toFixed(0)}万</span></div>`;
+    html += '<div class="calendar-month-body">';
+    for (const item of items) {
+      html += renderCalendarItem(item);
+    }
+    html += '</div></div>';
+  }
+
+  document.getElementById('view-calendar').innerHTML = html || '<div class="calendar-empty">暂无到期数据</div>';
+}
+
+function renderCalendarItem(item) {
+  let urgencyClass, daysClass, daysLabel;
+  if (item.daysLeft < 0) {
+    urgencyClass = 'past'; daysClass = 'past'; daysLabel = '已过期';
+  } else if (item.daysLeft <= 30) {
+    urgencyClass = 'urgent'; daysClass = 'urgent'; daysLabel = item.daysLeft + '天';
+  } else if (item.daysLeft <= 90) {
+    urgencyClass = 'soon'; daysClass = 'soon'; daysLabel = item.daysLeft + '天';
+  } else {
+    urgencyClass = 'far'; daysClass = 'far'; daysLabel = item.daysLeft + '天';
+  }
+
+  const amt = item.bal ? (item.bal >= 100000000 ? (item.bal/100000000).toFixed(2) + '亿' : (item.bal/10000).toFixed(0) + '万') : '—';
+  const linkedTag = item.linked ? '<span class="ci-linked">📎 周报关联</span>' : '';
+
+  return `<div class="calendar-item ${urgencyClass}">
+    <span class="ci-date">${item.mat.substring(5)}</span>
+    <span class="ci-bank">${item.shortName}</span>
+    <span class="ci-entity" title="${item.e}">${item.entityShort}</span>
+    <span class="ci-amount">${amt}</span>
+    <span class="ci-days ${daysClass}">${daysLabel}</span>
+    ${linkedTag}
+  </div>`;
 }
 
 // ====== INIT ======
@@ -980,6 +1223,8 @@ function init() {
       }
     }
   } catch (e) { /* ignore */ }
+  // Always render calendar on load (independent of weekly reports)
+  renderCalendarView();
 }
 
 init();

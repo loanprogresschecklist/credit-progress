@@ -1075,9 +1075,10 @@ const BANK_TO_SHORT = {
 
 function getShortName(fullName) {
   if (BANK_TO_SHORT[fullName]) return BANK_TO_SHORT[fullName];
-  // Try partial match
-  for (const [key, val] of Object.entries(BANK_TO_SHORT)) {
-    if (fullName.includes(key.replace(/银行.*/, '')) || key.includes(fullName)) return val;
+  var keys = Object.keys(BANK_TO_SHORT);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (fullName.indexOf(key.replace(/银行.*/, '')) >= 0 || key.indexOf(fullName) >= 0) return BANK_TO_SHORT[key];
   }
   return fullName;
 }
@@ -1228,8 +1229,6 @@ function init() {
       }
     }
   } catch (e) { /* ignore */ }
-  // Always render calendar on load (independent of weekly reports)
-  renderCalendarView();
 }
 
 init();

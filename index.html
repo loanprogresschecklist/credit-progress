@@ -1115,7 +1115,7 @@ function renderCalendarView() {
     if (!loan.mat) continue;
     const matDate = new Date(loan.mat + 'T00:00:00');
     const daysLeft = Math.ceil((matDate - today) / (1000 * 60 * 60 * 24));
-    const shortName = getShortName(loan.bank);
+    const shortName = getShortName(loan.b);
     const linked = weeklyBanks.has(shortName);
     const entityShort = SHORT_ENTITY[loan.e] || loan.e.substring(0, 6);
 

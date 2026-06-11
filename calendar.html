@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+<title>授信到期日历</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f6f8; --card-bg: #fff; --text: #2c3e50; --text-secondary: #6b7c93;
+  --border: #e2e6ed; --shadow: 0 1px 3px rgba(0,0,0,0.08); --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; font-size: 16px; }
+
+.header {
+  background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%); color: #fff;
+  padding: 14px 16px; text-align: center;
+}
+.header h1 { font-size: 1.1rem; font-weight: 600; }
+.header .sub { font-size: 0.72rem; opacity: 0.7; margin-top: 2px; }
+.container { max-width: 800px; margin: 0 auto; padding: 10px; }
+
+/* Filters */
+.filters {
+  display: flex; gap: 6px; margin-bottom: 10px; padding: 8px 10px;
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  flex-wrap: wrap; align-items: center;
+}
+.filters select {
+  padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 6px;
+  font-size: 0.82rem; font-family: var(--font); background: #fff; color: var(--text);
+  cursor: pointer; flex: 1; min-width: 80px; max-width: 140px;
+}
+.filters select:focus { outline: none; border-color: #3b6df0; }
+.filters .clear-btn {
+  padding: 7px 12px; border: 1.5px solid #dc3545; border-radius: 6px;
+  background: #fff; color: #dc3545; font-size: 0.72rem; cursor: pointer; font-family: var(--font);
+  white-space: nowrap;
+}
+
+/* Summary */
+.summary { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.summary-item {
+  padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+  display: flex; align-items: center; gap: 6px; flex: 1; min-width: 100px;
+}
+.summary-item .n { font-size: 1.1rem; }
+
+/* Month */
+.month {
+  background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden; margin-bottom: 12px;
+}
+.month-hd {
+  padding: 8px 14px; font-weight: 700; font-size: 0.85rem;
+  background: linear-gradient(135deg, #1a3a5c 0%, #2b5f8e 100%);
+  color: #fff; display: flex; justify-content: space-between; align-items: center;
+}
+.month-hd .cnt { font-size: 0.68rem; opacity: 0.8; }
+.month-bd { padding: 4px 8px; display: flex; flex-direction: column; gap: 3px; }
+
+/* Item */
+.item {
+  display: flex; align-items: center; gap: 6px; padding: 8px 8px;
+  border-radius: 6px; border-left: 4px solid; font-size: 0.78rem;
+}
+.item.u { background: #fef2f2; border-left-color: #dc3545; }
+.item.s { background: #fffbeb; border-left-color: #f59e0b; }
+.item.f { background: #f0fdf4; border-left-color: #16a34a; }
+.item.p { background: #f9fafb; border-left-color: #999; }
+.item .d { font-weight: 700; font-size: 0.78rem; min-width: 44px; text-align: center; }
+.item .b { font-weight: 700; font-size: 0.8rem; min-width: 52px; }
+.item .e { font-size: 0.68rem; color: var(--text-secondary); min-width: 0; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .a { font-weight: 700; font-size: 0.8rem; min-width: 64px; text-align: right; }
+.item .dy { font-size: 0.66rem; padding: 2px 6px; border-radius: 10px; white-space: nowrap; color: #fff; }
+.item .dy.u { background: #dc3545; } .item .dy.s { background: #f59e0b; }
+.item .dy.f { background: #16a34a; } .item .dy.p { background: #999; }
+.item .lk { font-size: 0.62rem; padding: 2px 5px; border-radius: 6px; background: #dbeafe; color: #1e40af; white-space: nowrap; }
+.empty { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 0.8rem; }
+.footer { text-align: center; padding: 12px; color: var(--text-secondary); font-size: 0.68rem; }
+
+/* Mobile < 480px */
+@media (max-width: 480px) {
+  .container { padding: 6px; }
+  .filters { gap: 4px; padding: 6px 8px; }
+  .filters select { padding: 7px 6px; font-size: 0.78rem; }
+  .summary-item { padding: 6px 8px; font-size: 0.66rem; min-width: 70px; }
+  .summary-item .n { font-size: 0.95rem; }
+  .item { gap: 3px; padding: 6px 6px; font-size: 0.72rem; }
+  .item .e { display: none; }
+  .item .d { font-size: 0.7rem; min-width: 38px; }
+  .item .b { font-size: 0.72rem; min-width: 44px; }
+  .item .a { font-size: 0.72rem; min-width: 50px; }
+  .item .dy { font-size: 0.6rem; padding: 1px 5px; }
+  .month-hd { padding: 6px 10px; font-size: 0.78rem; }
+  .month-bd { padding: 2px 4px; gap: 2px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📅 授信到期日历</h1>
+  <div class="sub">数据来自《贷款明细统计表》· 2026-06-11</div>
+</div>
+
+<div class="container">
+  <div class="filters">
+    <select id="fType" onchange="render()"><option value="">全部类型</option></select>
+    <select id="fBank" onchange="render()"><option value="">全部银行</option></select>
+    <select id="fEntity" onchange="render()"><option value="">全部主体</option></select>
+    <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearFilters()">✕ 清除</button>
+  </div>
+  <div id="calendar"></div>
+</div>
+
+<div class="footer">授信到期日历 · 数据定期更新</div>
+
+<script>
+var LOANS = [
+{s:1,b:"厦门国际银行",e:"深圳乐信软件技术有限公司",bal:25000000,mat:"2026-12-04",t:"流贷"},
+{s:2,b:"厦门国际银行",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2026-11-07",t:"流贷"},
+{s:3,b:"农业银行福田支行",e:"深圳乐信软件技术有限公司",bal:15000000,mat:"2027-03-04",t:"流贷"},
+{s:4,b:"农业银行福田支行",e:"深圳乐信软件技术有限公司",bal:5000000,mat:"2026-07-28",t:"流贷"},
+{s:5,b:"江苏银行深圳福田支行",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2026-07-30",t:"流贷"},
+{s:6,b:"江苏银行深圳福田支行",e:"深圳乐信软件技术有限公司",bal:10000000,mat:"2026-07-30",t:"流贷"},
+{s:7,b:"深圳农村商业银行股份有限公司",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2027-02-09",t:"流贷"},
+{s:8,b:"中国银行景田北支行",e:"深圳乐信软件技术有限公司",bal:30000000,mat:"2026-07-10",t:"流贷"},
+{s:9,b:"广州银行深圳粤海支行",e:"深圳乐信软件技术有限公司",bal:20000000,mat:"2026-08-29",t:"流贷"},
+{s:10,b:"宁波银行深圳分行",e:"深圳乐信软件技术有限公司",bal:10000000,mat:"2026-06-24",t:"流贷"},
+{s:11,b:"浦发银行深圳分行",e:"深圳市分期乐网络科技有限公司",bal:null,mat:"2026-03-26",t:"流贷"},
+{s:12,b:"浦发银行深圳分行",e:"深圳市分期乐网络科技有限公司",bal:null,mat:"2026-03-26",t:"流贷"},
+{s:13,b:"浦发银行江西南昌分行",e:"吉安市分期乐网络小额贷款有限公司",bal:50000000,mat:"2026-09-17",t:"流贷"},
+{s:14,b:"徽商银行科技园支行",e:"深圳市分期乐网络科技有限公司",bal:30000000,mat:"2026-09-28",t:"流贷"},
+{s:15,b:"工商银行深圳上步支行",e:"深圳市分期乐网络科技有限公司",bal:50000000,mat:"2026-12-26",t:"流贷"},
+{s:16,b:"中信银行皇岗支行",e:"深圳市分期乐网络科技有限公司",bal:10000000,mat:"2026-06-12",t:"流贷"},
+{s:17,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:10600000,mat:"2026-09-10",t:"流贷"},
+{s:18,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:4400000,mat:"2026-11-06",t:"流贷"},
+{s:19,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:9697349,mat:"2026-09-10",t:"流贷"},
+{s:20,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:5828608,mat:"2026-10-08",t:"流贷"},
+{s:21,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:5140880,mat:"2026-11-03",t:"流贷"},
+{s:22,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:4332809,mat:"2026-11-27",t:"流贷"},
+{s:23,b:"光大深圳深南支行",e:"深圳市分期乐网络科技有限公司",bal:20000000,mat:"2026-09-08",t:"流贷"},
+{s:24,b:"光大深圳深南支行",e:"深圳市分期乐网络科技有限公司",bal:40000000,mat:"2026-07-22",t:"流贷"},
+{s:25,b:"恒丰银行深圳分行营业部",e:"深圳市分期乐网络科技有限公司",bal:40000000,mat:"2026-09-22",t:"流贷"},
+{s:26,b:"广发银行凤凰支行",e:"深圳市分期乐网络科技有限公司",bal:30000000,mat:"2026-08-10",t:"流贷"},
+{s:27,b:"浙商银行罗湖支行",e:"深圳市分期乐网络科技有限公司",bal:30000000,mat:"2026-08-05",t:"流贷"},
+{s:28,b:"恒丰银行深圳分行营业部",e:"深圳分期乐贸易有限公司",bal:10000000,mat:"2026-09-24",t:"流贷"},
+{s:29,b:"工商银行深圳彩田支行",e:"深圳市分期乐网络科技有限公司",bal:402727295,mat:"2032-07-05",t:"固贷"},
+{s:30,b:"中国银行景田北支行",e:"深圳市分期乐网络科技有限公司",bal:342494692,mat:"2032-07-05",t:"固贷"}
+];
+
+var BANK_SHORT = {
+'农业银行福田支行':'农行','农业银行':'农行','江苏银行深圳福田支行':'江苏','江苏银行':'江苏',
+'广州银行深圳粤海支行':'广州','广州银行':'广州','宁波银行深圳分行':'宁波','宁波银行':'宁波',
+'浦发银行深圳分行':'浦发','浦发银行江西南昌分行':'浦发','浦发银行':'浦发',
+'工商银行深圳上步支行':'工行','工商银行深圳彩田支行':'工行','工商银行':'工行',
+'中信银行皇岗支行':'中信','中信银行':'中信','中国银行景田北支行':'中行','中国银行':'中行',
+'光大深圳深南支行':'光大','光大银行':'光大','广发银行凤凰支行':'广发','广发银行':'广发',
+'浙商银行罗湖支行':'浙商','浙商银行':'浙商','厦门国际银行':'厦门国际',
+'徽商银行科技园支行':'徽商','深圳农村商业银行股份有限公司':'深圳农商','恒丰银行深圳分行营业部':'恒丰'
+};
+
+var ENTITY_SHORT = {
+'深圳乐信软件技术有限公司':'软件','深圳市分期乐网络科技有限公司':'分期乐网络',
+'吉安市分期乐网络小额贷款有限公司':'吉安小贷','深圳分期乐贸易有限公司':'贸易'
+};
+
+function sn(b) { return BANK_SHORT[b] || b; }
+function es(e) { return ENTITY_SHORT[e] || e.substring(0,6); }
+
+function amt(v) {
+  if (!v) return '—';
+  return v >= 100000000 ? (v/100000000).toFixed(2) + '亿' : (v/10000).toFixed(0) + '万';
+}
+
+function initFilters() {
+  var types = {}, banks = {}, entities = {};
+  for (var i = 0; i < LOANS.length; i++) {
+    var l = LOANS[i]; if (!l.mat) continue;
+    if (l.t) types[l.t] = true;
+    banks[sn(l.b)] = true;
+    entities[es(l.e)] = true;
+  }
+  function fill(id, map, sort) {
+    var sel = document.getElementById(id);
+    var keys = Object.keys(map);
+    if (sort) keys.sort();
+    for (var j = 0; j < keys.length; j++) {
+      var o = document.createElement('option');
+      o.value = keys[j]; o.textContent = keys[j]; sel.appendChild(o);
+    }
+  }
+  fill('fType', types, true);
+  fill('fBank', banks, true);
+  fill('fEntity', entities, true);
+}
+
+function clearFilters() {
+  document.getElementById('fType').value = '';
+  document.getElementById('fBank').value = '';
+  document.getElementById('fEntity').value = '';
+  render();
+}
+
+function render() {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var ft = document.getElementById('fType').value;
+  var fb = document.getElementById('fBank').value;
+  var fe = document.getElementById('fEntity').value;
+  var hasFilter = ft || fb || fe;
+  document.getElementById('clearBtn').style.display = hasFilter ? '' : 'none';
+
+  var monthGroups = {}, pastLoans = [];
+  var totalBal = 0, urgent = 0, soon = 0, count = 0;
+
+  for (var i = 0; i < LOANS.length; i++) {
+    var l = LOANS[i]; if (!l.mat) continue;
+    var bn = sn(l.b), en = es(l.e);
+    if (ft && l.t !== ft) continue;
+    if (fb && bn !== fb) continue;
+    if (fe && en !== fe) continue;
+
+    count++;
+    var md = new Date(l.mat + 'T00:00:00');
+    var dl = Math.ceil((md - today) / (1000*60*60*24));
+    if (l.bal) totalBal += l.bal;
+    if (dl < 0) { pastLoans.push({l:l,dl:dl,bn:bn,en:en,md:md}); }
+    else {
+      if (dl <= 30) urgent++;
+      else if (dl <= 90) soon++;
+      var mk = l.mat.substring(0,7);
+      if (!monthGroups[mk]) monthGroups[mk] = [];
+      monthGroups[mk].push({l:l,dl:dl,bn:bn,en:en,md:md});
+    }
+  }
+
+  var html = '';
+
+  // Summary
+  html += '<div class="summary">';
+  html += '<div class="summary-item" style="background:#fef2f2;color:#991b1b;"><span>⚠️ 30天到期</span><span class="n">' + urgent + '</span></div>';
+  html += '<div class="summary-item" style="background:#fffbeb;color:#92400e;"><span>📅 90天到期</span><span class="n">' + soon + '</span></div>';
+  html += '<div class="summary-item" style="background:#f0fdf4;color:#166534;"><span>💰 总余额</span><span class="n">' + (totalBal/100000000).toFixed(2) + '亿</span></div>';
+  html += '<div class="summary-item" style="background:#f0f4ff;color:#3730a3;"><span>🏦 笔数</span><span class="n">' + count + '</span></div>';
+  html += '</div>';
+
+  // Past
+  if (pastLoans.length > 0) {
+    html += '<div class="month"><div class="month-hd" style="background:#999;">📅 已过期 <span class="cnt">' + pastLoans.length + '笔</span></div><div class="month-bd">';
+    for (var pi = 0; pi < pastLoans.length; pi++) html += itemHTML(pastLoans[pi]);
+    html += '</div></div>';
+  }
+
+  // Months
+  var months = Object.keys(monthGroups).sort();
+  for (var mi = 0; mi < months.length; mi++) {
+    var mk = months[mi], items = monthGroups[mk];
+    var mt = 0; for (var ji = 0; ji < items.length; ji++) mt += (items[ji].l.bal || 0);
+    var parts = mk.split('-');
+    html += '<div class="month"><div class="month-hd">' + parts[0] + '年' + parseInt(parts[1]) + '月 <span class="cnt">' + items.length + '笔 · ' + (mt/10000).toFixed(0) + '万</span></div><div class="month-bd">';
+    for (var ki = 0; ki < items.length; ki++) html += itemHTML(items[ki]);
+    html += '</div></div>';
+  }
+
+  document.getElementById('calendar').innerHTML = html || '<div class="empty">无匹配结果</div>';
+}
+
+function itemHTML(it) {
+  var uc, dc, dl;
+  if (it.dl < 0) { uc = 'p'; dc = 'p'; dl = '已过期'; }
+  else if (it.dl <= 30) { uc = 'u'; dc = 'u'; dl = it.dl + '天'; }
+  else if (it.dl <= 90) { uc = 's'; dc = 's'; dl = it.dl + '天'; }
+  else { uc = 'f'; dc = 'f'; dl = it.dl + '天'; }
+
+  return '<div class="item ' + uc + '">' +
+    '<span class="d">' + it.l.mat.substring(5) + '</span>' +
+    '<span class="b">' + it.bn + '</span>' +
+    '<span class="e" title="' + (it.l.e||'') + '">' + it.en + '</span>' +
+    '<span class="a">' + amt(it.l.bal) + '</span>' +
+    '<span class="dy ' + dc + '">' + dl + '</span>' +
+    '</div>';
+}
+
+initFilters();
+render();
+</script>
+</body>
+</html>

@@ -389,11 +389,32 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   /* Larger tap targets on mobile */
   .cell-expand, .tab, .btn { min-height: 40px; display: inline-flex; align-items: center; }
   .font-btn { width: 36px; height: 36px; }
+
+  /* Calendar mobile */
+  .calendar-filters { flex-direction: column; align-items: stretch; gap: 6px; }
+  .calendar-filters label { display: none; }
+  .calendar-filters select { max-width: 100%; width: 100%; padding: 8px 10px; font-size: 0.85rem; }
+  .calendar-summary { gap: 6px; }
+  .calendar-summary-item { padding: 6px 10px; font-size: 0.7rem; flex: 1 1 45%; }
+  .calendar-summary-item .cs-count { font-size: 1rem; }
+  .calendar-month-header { padding: 8px 12px; font-size: 0.82rem; }
+  .calendar-month-body { padding: 6px 8px; gap: 4px; }
+  .calendar-item { gap: 4px; padding: 6px 8px; font-size: 0.75rem; }
+  .calendar-item .ci-date { font-size: 0.72rem; min-width: 42px; }
+  .calendar-item .ci-bank { font-size: 0.76rem; min-width: 56px; }
+  .calendar-item .ci-entity { font-size: 0.66rem; min-width: 0; max-width: 80px; }
+  .calendar-item .ci-amount { font-size: 0.76rem; min-width: 60px; }
+  .calendar-item .ci-days { font-size: 0.65rem; padding: 1px 6px; }
 }
 
 @media (max-width: 480px) {
   .summary-grid { grid-template-columns: 1fr; }
   .legend { gap: 6px; font-size: 0.68rem; }
+  .calendar-item .ci-entity { display: none; }
+  .calendar-item .ci-amount { min-width: 50px; font-size: 0.72rem; }
+  .calendar-item .ci-bank { min-width: 48px; font-size: 0.72rem; }
+  .calendar-item .ci-date { min-width: 36px; font-size: 0.68rem; }
+  .calendar-item .ci-linked { font-size: 0.58rem; padding: 1px 4px; }
 }
 </style>
 </head>

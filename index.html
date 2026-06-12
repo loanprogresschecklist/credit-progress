@@ -586,8 +586,13 @@ function parseReports(rawText) {
     }
   }
 
-  // 按日期排序，序号自动从1开始，不依赖原文里的数字
-  weeks.sort((a, b) => a.date.localeCompare(b.date));
+  // 按日期排序（数字比较，避免 "6.12" < "6.8" 的字符串排序问题）
+  weeks.sort((a, b) => {
+    var ap = a.date.split('.'), bp = b.date.split('.');
+    var an = parseInt(ap[0]) * 10000 + parseInt(ap[1]) * 100 + parseInt(ap[2]);
+    var bn = parseInt(bp[0]) * 10000 + parseInt(bp[1]) * 100 + parseInt(bp[2]);
+    return an - bn;
+  });
   for (let i = 0; i < weeks.length; i++) {
     weeks[i].id = i + 1;
   }

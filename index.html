@@ -1243,6 +1243,11 @@ function renderCalendarView() {
 
   var sortedMonths = Object.keys(monthGroups).sort();
 
+  // 组内按到期日升序排序（ISO 日期字符串字典序 = 时间序）
+  var byMat = function(a, b) { return a.mat < b.mat ? -1 : (a.mat > b.mat ? 1 : 0); };
+  pastLoans.sort(byMat);
+  for (var gk in monthGroups) { monthGroups[gk].sort(byMat); }
+
   // Summary bar
   var html = filterHtml;
   html += '<div class="calendar-summary">';
